@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポスティング戦況マップ Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg-color: #0f172a;
+        --panel-bg: rgba(30, 41, 59, 0.7);
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --accent-color: #38bdf8;
+        --done-color: #4ade80;
+        --todo-color: #f87171;
+        --glass-border: rgba(255, 255, 255, 0.1);
+      }
+      body, html {
+        margin: 0; padding: 0; height: 100%;
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        overflow: hidden;
+      }
+      #container { display: flex; height: 100vh; }
+      #map { flex-grow: 1; height: 100%; }
+      
+      #sidebar {
+        width: 320px;
+        background: var(--panel-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-left: 1px solid var(--glass-border);
+        padding: 24px;
+        box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+      }
+      
+      .header-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 24px;
+        background: linear-gradient(to right, #38bdf8, #818cf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.025em;
+      }
+      
+      .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      
+      .stat-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        padding: 16px;
+        border-radius: 16px;
+        transition: transform 0.2s;
+      }
+      .stat-card:hover { transform: translateY(-2px); }
+      
+      .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      
+      .area-item {
+        padding: 10px;
+        border-radius: 12px;
+        margin-bottom: 8px;
+        background: rgba(255,255,255,0.03);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        border: 1px solid transparent;
+      }
+      .area-item:hover { border-color: var(--glass-border); }
+
+      #loading {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--bg-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        transition: opacity 0.5s;
+      }
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 3px solid var(--glass-border);
+        border-radius: 50%;
+        display: inline-block;
+        position: relative;
+        animation: rotation 1s linear infinite;
+      }
+      .loader::after {
+        content: '';  
+        position: absolute;
+        left: 0; top: 0;
+        background: var(--accent-color);
+        width: 12px; height: 12px;
+        border-radius: 50%;
+      }
+      @keyframes rotation {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading">
+      <span class="loader"></span>
+      <p style="margin-top: 16px; color: var(--text-secondary);">司令室データを同期中...</p>
+    </div>
+
+    <div id="container">
+      <div id="map"></div>
+      <div id="sidebar">
+        <div class="header-title">STRATEGY CENTER</div>
+        
+        <div class="stat-grid">
+          <div class="stat-card">
+            <span class="stat-label">Overall Progress</span>
+            <span id="progress-val" class="stat-value" style="color: var(--done-color);">0%</span>
+          </div>
+          
+          <div class="stat-card">
+            <span class="stat-label">Completed / Total</span>
+            <span id="done-count" class="stat-value">0 / 0</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px; font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); letter-spacing: 0.1em;">AREA INSIGHTS</div>
+        <div id="area-items"></div>
+
+        <div id="legend" style="margin-top: auto; padding-top: 24px;">
+          <div style="display: flex; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-secondary);">
+              <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--done-color);"></div> DONE
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-secondary);">
+              <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--todo-color);"></div> TODO
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=<?= apiKey ?>&callback=initMap&language=ja" async defer></script>
+    
+    <script>
+      let map;
+      let markers = [];
+      let townCircles = [];
+      const ZOOM_THRESHOLD = 15;
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+          center: { lat: 34.862, lng: 136.538 },
+          zoom: 12,
+          styles: [
+            { elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#1e293b" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f172a" }] }
+          ],
+          disableDefaultUI: false,
+          zoomControl: true,
+          mapTypeControl: false,
+          streetViewControl: false
+        });
+
+        map.addListener("zoom_changed", updateVisibility);
+        google.script.run.withSuccessHandler(drawMapContent).getMapData();
+      }
+
+      function updateVisibility() {
+        const zoom = map.getZoom();
+        const showMarkers = zoom >= ZOOM_THRESHOLD;
+        markers.forEach(m => m.setVisible(showMarkers));
+        townCircles.forEach(c => c.setVisible(!showMarkers));
+      }
+
+      function drawMapContent(data) {
+        if (!data || !data.points || data.points.length === 0) {
+          hideLoading();
+          document.getElementById('progress-val').innerText = '0%';
+          document.getElementById('done-count').innerText = '0 / 0';
+          document.getElementById('area-items').innerHTML =
+            '<div style="color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:20px;">データがありません。<br>エリアシートを生成してから<br>再度お試しください。</div>';
+          return;
+        }
+
+        const geocoder = new google.maps.Geocoder();
+        const { points, summary } = data;
+
+        // 町丁目サマリー描画（座標がある場合は即座に表示）
+        Object.keys(summary).forEach((townName, i) => {
+          const s = summary[townName];
+          const rate = s.done / s.total;
+          
+          if (s.lat && s.lng) {
+            createTownCircle(townName, { lat: s.lat, lng: s.lng }, rate, s);
+          } else {
+            // 座標がない場合のみジオコーディング
+            setTimeout(() => {
+              geocoder.geocode({ address: s.address }, (results, status) => {
+                if (status === "OK") createTownCircle(townName, results[0].geometry.location, rate, s);
+              });
+            }, i * 150);
+          }
+        });
+
+        // 個別ピン描画（座標がある場合は即座に表示）
+        points.forEach((p, index) => {
+          if (p.lat && p.lng) {
+            createPointMarker(p, { lat: p.lat, lng: p.lng });
+          } else {
+            // 座標がない場合のみジオコーディング
+            setTimeout(() => {
+              geocoder.geocode({ address: p.address }, (results, status) => {
+                if (status === "OK") createPointMarker(p, results[0].geometry.location);
+              });
+            }, index * 100);
+          }
+        });
+
+        updateSidebar(points, summary);
+        hideLoading();
+      }
+
+      function createTownCircle(townName, position, rate, s) {
+        const circle = new google.maps.Circle({
+          strokeColor: "#FFFFFF",
+          strokeOpacity: 0.3,
+          strokeWeight: 1,
+          fillColor: getProgressColor(rate),
+          fillOpacity: 0.5,
+          map: map,
+          center: position,
+          radius: 350,
+          visible: map.getZoom() < ZOOM_THRESHOLD
+        });
+        const info = new google.maps.InfoWindow({
+          content: `<div style="color:#333; padding:8px;">
+            <strong style="font-size:1.1rem;">${townName}</strong><br>
+            <div style="margin-top:5px;">進捗率: ${Math.round(rate*100)}% (${s.done}/${s.total})</div>
+          </div>`
+        });
+        circle.addListener("click", () => {
+          info.setPosition(position);
+          info.open(map);
+        });
+        townCircles.push(circle);
+      }
+
+      function createPointMarker(p, position) {
+        const marker = new google.maps.Marker({
+          map: map,
+          position: position,
+          visible: map.getZoom() >= ZOOM_THRESHOLD,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 7 + (parseInt(p.priority) * 3),
+            fillColor: p.status === "done" ? "#4ade80" : "#f87171",
+            fillOpacity: 0.9,
+            strokeWeight: 1,
+            strokeColor: "#ffffff",
+          },
+        });
+        
+        const infoWindow = new google.maps.InfoWindow({
+          content: `<div style="color:#333; min-width:180px; padding:10px;">
+            <div style="font-size:0.75rem; color:#64748b; margin-bottom:2px;">${p.area}</div>
+            <div style="font-weight:bold; font-size:1rem; margin-bottom:8px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+              ${p.address.replace(/\\n/g, '<br>')}
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.85rem;">
+              <div>📊 投票率: <strong>${p.turnout}%</strong></div>
+              <div>🔥 優先度: <strong>${"★".repeat(p.priority) || "標準"}</strong></div>
+            </div>
+            <div style="margin-top:10px; font-size:0.85rem; color:#1e293b;">👤 担当: ${p.staff || "未定"}</div>
+            ${p.strategy ? `<div style="margin-top:8px; padding:6px; background:#fff1f2; border-radius:4px; color:#e11d48; font-size:0.8rem;">📝 ${p.strategy}</div>` : ""}
+          </div>`
+        });
+        marker.addListener("click", () => infoWindow.open(map, marker));
+        markers.push(marker);
+      }
+
+      function getProgressColor(rate) {
+        if (rate >= 0.8) return "#4ade80";
+        if (rate >= 0.3) return "#fbbf24";
+        return "#f87171";
+      }
+
+      function safeRate(done, total) {
+        return (total > 0) ? done / total : 0;
+      }
+
+      function updateSidebar(points, summary) {
+        const done = points.filter(p => p.status === "done").length;
+        const total = points.length;
+        const rate = safeRate(done, total);
+        document.getElementById("progress-val").innerText = Math.round(rate * 100) + "%";
+        document.getElementById("done-count").innerText = `${done} / ${total}`;
+        
+        const areaList = document.getElementById("area-items");
+        areaList.innerHTML = "";
+        if (Object.keys(summary).length === 0) {
+          areaList.innerHTML = '<div style="color:var(--text-secondary);font-size:0.8rem;">エリア情報なし</div>';
+          return;
+        }
+        Object.keys(summary).slice(0, 10).forEach(town => {
+          const s = summary[town];
+          const r = safeRate(s.done, s.total);
+          const item = document.createElement("div");
+          item.className = "area-item";
+          item.innerHTML = `<span>${town}</span><span style="color:${getProgressColor(r)}">${Math.round(r * 100)}%</span>`;
+          areaList.appendChild(item);
+        });
+      }
+
+      function hideLoading() {
+        const loader = document.getElementById("loading");
+        loader.style.opacity = "0";
+        setTimeout(() => loader.style.display = "none", 500);
+      }
+    </script>
+  </body>
+</html>

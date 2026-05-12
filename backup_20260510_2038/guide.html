@@ -1,0 +1,62 @@
+<style>
+  .guide-card {
+    background: #fff; border-radius: 20px; padding: 24px; margin-bottom: 20px;
+    border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    position: relative; overflow: hidden;
+  }
+  .guide-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--blue);
+  }
+  .step-num {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; background: var(--blue); color: #fff;
+    border-radius: 50%; font-weight: 900; font-size: 14px; margin-bottom: 12px;
+  }
+  .guide-step h3 { font-size: 18px; font-weight: 900; color: var(--navy); margin-bottom: 8px; }
+  .guide-step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  
+  .welcome-box {
+    text-align: center; padding: 40px 20px;
+  }
+  .welcome-box h2 { font-size: 26px; font-weight: 900; color: var(--navy); margin-bottom: 10px; }
+  .welcome-box p { font-size: 14px; color: var(--muted); letter-spacing: 0.05em; }
+</style>
+
+<div id="page-guide" class="page">
+  <div class="welcome-box">
+    <h2>らくらくガイド</h2>
+    <p>3ステップで報告完了！</p>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="guide-card">
+    <div class="step-num">1</div>
+    <div class="guide-step">
+      <h3>名前を登録</h3>
+      <p>「設定」タブからお名前を登録してください。一度登録すればずっと使えます。</p>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="guide-card">
+    <div class="step-num">2</div>
+    <div class="guide-step">
+      <h3>エリアを選択</h3>
+      <p>「エリア」タブから配布する町名を選びます。📍ボタンで地図が開きます。</p>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="guide-card">
+    <div class="step-num">3</div>
+    <div class="guide-step">
+      <h3>配布報告</h3>
+      <p>「配布完了」にチェックを入れ、枚数を選べば完了！自動であなたの名前が記録されます。</p>
+    </div>
+  </div>
+
+  <div style="padding: 40px 20px; text-align: center; color: var(--muted); font-size: 12px; font-weight: 700;">
+    VERSION 2.6.0<br>
+    © 2026 Posting Strategy System
+  </div>
+</div>

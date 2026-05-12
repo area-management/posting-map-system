@@ -1,0 +1,57 @@
+<style>
+  .admin-btn {
+    width: 100%; padding: 16px; border-radius: 12px; border: none;
+    background: var(--navy); color: #fff; font-size: 14px; font-weight: 700;
+    margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .admin-btn.danger { background: var(--red); }
+  .admin-btn:active { opacity: 0.8; transform: scale(0.98); }
+  
+  .info-box {
+    background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 24px;
+    border-left: 4px solid var(--blue);
+  }
+  .info-box p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+</style>
+
+<div id="page-settings" class="page">
+  <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 20px;">設定・管理</h2>
+
+  <div class="info-box">
+    <h4 style="font-size: 14px; margin-bottom: 8px;">アプリ情報</h4>
+    <p>
+      バージョン: 2.5.0 (Stable & Premium Edition)<br>
+      同期状態: リアルタイム同期中
+    </p>
+  </div>
+
+  <h3 class="section-title">管理者用ツール</h3>
+  
+  <button class="admin-btn" onclick="forceRestart()">
+    <i>🔄</i>
+    <span>バッチ処理を強制再始動</span>
+  </button>
+  <p style="font-size: 11px; color: var(--muted); margin: -4px 0 20px 4px;">
+    ※エリアシートの生成が止まっている場合に使用してください。
+  </p>
+
+  <button class="admin-btn danger" onclick="showToast('ログアウト機能は未実装です', 'info')">
+    <span>ログアウト</span>
+  </button>
+
+  <script>
+    function forceRestart() {
+      if(!confirm("バッチ処理をリセットして再開しますか？")) return;
+      
+      showToast("再始動リクエスト送信中...", "info");
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast("再始動しました。数分でシートが更新されます。");
+        })
+        .withFailureHandler(err => {
+          showToast("エラー: " + err.message, "error");
+        })
+        .forceStartBatch();
+    }
+  </script>
+</div>

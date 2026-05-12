@@ -1,0 +1,1369 @@
+// ==========================================
+// GLOBAL CONFIGURATION
+// ==========================================
+const CONFIG = {
+  VERSION: "2.0.0 (Global Edition)",
+  // ファイル名設定
+  DISTRICT_CSV: "三重県選挙区区割り.csv",
+  POSTAL_CSV: "MIE_POSTAL.CSV",
+  TURNOUT_CSV: "voter_turnout.csv",
+  TARGET_GOAL: 100000, // 目標配布枚数（ダッシュボード用）
+  
+  // シート名設定
+  SHEET_GUIDE: "初めての方「使い方ガイド」",
+  SHEET_ROSTER: "名簿",
+  SHEET_TEMPLATE: "原本",
+  SHEET_POSTAL: "郵便番号",
+  SHEET_DISTRICT: "区割り",
+  SHEET_MASTER_EXPORT: "📥 集計用マスターデータ",
+  SHEET_REPORT: "📄 活動報告書",
+  SHEET_MANUAL: "📖 らくらくマニュアル",
+  
+  // 動作設定
+  CHUNK_SIZE: 10,
+  ROW_HEIGHT_STAFF: 60,
+  
+  // デフォルト対象（起動時や設定未完了時用）
+  DEFAULT_DISTRICT: "第2区",
+  DEFAULT_PREFECTURE: "三重県",
+  
+  // ライセンス設定（将来用）
+  LICENSE_API_URL: "", 
+};
+
+// =============================
+// ① 区割りCSV＆郵便番号CSVからのデータ抽出（汎用版）
+// =============================
+/**
+ * 指定された選挙区の住所データを抽出する
+ * @param {string} targetDistrictName 例: "第2区"
+ * @param {string} targetPrefecture 例: "三重県"
+ */
+function extractDistrictAddresses(targetDistrictName = CONFIG.DEFAULT_DISTRICT, targetPrefecture = CONFIG.DEFAULT_PREFECTURE) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. 区割りデータから対象選挙区の市区町村・町域を特定
+  const districtData = getCsvOrSheetData(CONFIG.DISTRICT_CSV);
+  if (!districtData) {
+    ss.toast(`Google Drive上に「${CONFIG.DISTRICT_CSV}」が見つかりません。`, "エラー", 5);
+    return [];
+  }
+  
+  const targetRules = [];
+  // ヘッダーを飛ばす（i=1から）
+  for (let i = 1; i < districtData.length; i++) {
+    const row = districtData[i];
+    // CSV列構成: 区数(0), 都道府県(1), 市区町村(2), 町域(3)
+    if (row && row[0] === targetDistrictName && row[1] === targetPrefecture) {
+      targetRules.push({
+        city: row[2],
+        townArea: row[3] || ""
+      });
+    }
+  }
+
+  // 2. 郵便番号データから住所を抽出
+  const postalData = getCsvOrSheetData(CONFIG.POSTAL_CSV);
+  if (!postalData) {
+    ss.toast(`Google Drive上に「${CONFIG.POSTAL_CSV}」が見つかりません。`, "エラー", 5);
+    return [];
+  }
+
+  const addressMap = new Map();
+
+  targetRules.forEach(rule => {
+    if (rule.townArea) {
+      // 町域指定がある場合、すでに市名が含まれていればそのまま、含まれていなければ市名を結合
+      const addrString = rule.townArea.startsWith(rule.city) ? rule.townArea : rule.city + rule.townArea;
+      
+      // 適切な郵便番号（その市の「以下に掲載がない場合」の代表番号）を探す
+      let genericPostal = "";
+      for (let i = 0; i < postalData.length; i++) {
+        const r = postalData[i];
+        // MIE_POSTAL.CSVの列構成: 郵便番号(2), 都道府県(6), 市区町村(7), 町域(8)
+        if (r && r[6] === targetPrefecture && r[7] === rule.city && r[8] === "以下に掲載がない場合") {
+          const p = r[2] ? r[2].toString().trim() : "";
+          if (p.length === 7) genericPostal = `${p.slice(0,3)}-${p.slice(3)}`;
+          break;
+        }
+      }
+      
+      addressMap.set(addrString, genericPostal);
+    } else {
+      // 町域指定がない場合は、対象市のすべての町域を郵便番号データから抽出
+      postalData.forEach(row => {
+        if (row && row[6] === targetPrefecture && row[7] === rule.city) {
+          const pCode = row[2] ? row[2].toString().trim() : "";
+          const postalStr = pCode.length === 7 ? `${pCode.slice(0,3)}-${pCode.slice(3)}` : pCode;
+          const townRaw = row[8];
+          
+          if (townRaw && townRaw !== "以下に掲載がない場合") {
+            // 3. 丁目展開ロジックの適用
+            const expanded = expandTownChome(rule.city, townRaw);
+            expanded.forEach(addr => {
+              if (!addressMap.has(addr) || addressMap.get(addr) === "") {
+                addressMap.set(addr, postalStr);
+              }
+            });
+          }
+        }
+      });
+    }
+  });
+
+  return Array.from(addressMap, ([address, postalCode]) => ({ postalCode, address }));
+}
+
+// 自動的にスプレッドシートかCSVかを判別してデータを取得するヘルパー
+function getCsvOrSheetData(filename) {
+  const files = DriveApp.getFilesByName(filename);
+  if (!files.hasNext()) return null;
+  const file = files.next();
+  const mime = file.getMimeType();
+
+  if (mime === MimeType.GOOGLE_SHEETS) {
+    const ss = SpreadsheetApp.open(file);
+    return ss.getSheets()[0].getDataRange().getValues();
+  } else {
+    const text = file.getBlob().getDataAsString("UTF-8");
+    try {
+      return Utilities.parseCsv(text);
+    } catch (e) {
+      return text.split('\n').map(line => line.split(','));
+    }
+  }
+}
+
+// 丁目展開ロジック
+function expandTownChome(baseCity, townRaw) {
+  if (!townRaw) return [];
+  const match = townRaw.match(/（([０-９0-9]+)〜([０-９0-9]+)丁目）/);
+
+  if (match) {
+    const start = parseInt(toHalfWidth(match[1]), 10);
+    const end = parseInt(toHalfWidth(match[2]), 10);
+    const baseTown = townRaw.replace(/（.*?）/g, "");
+
+    let list = [];
+    for (let i = start; i <= end; i++) {
+      list.push(baseCity + baseTown + i + "丁目");
+    }
+    return list;
+  }
+  const clean = townRaw.replace(/（.*?）/g, "");
+  return [baseCity + clean];
+}
+
+// 全角数字を半角に変換するヘルパー
+function toHalfWidth(str) {
+  return str.replace(/[０-９]/g, function(s) {
+    return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+  });
+}
+
+
+// =============================
+// ② バッチ処理対応：エリアシート生成
+// =============================
+
+/**
+ * シート生成をバッチ処理（分割実行）で開始する
+ */
+function startGenerateAreaSheets() {
+  if (isNotAdmin()) return;
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.alert('大規模実行の確認', 
+    '数万件のデータを処理する場合、分割して実行します。\n完了まで数分〜数十分かかる場合がありますが、よろしいですか？\n(処理中はスプレッドシートを閉じても大丈夫です)', 
+    ui.ButtonSet.YES_NO);
+  
+  if (response == ui.Button.YES) {
+    // ステートのリセット
+    const props = PropertiesService.getScriptProperties();
+    props.setProperty('BATCH_STATUS', 'running');
+    props.setProperty('BATCH_INDEX', '0');
+    props.setProperty('BATCH_CITY_COUNTS', JSON.stringify({}));
+    
+    // 最初の実行
+    generateAreaSheetsBatch();
+  }
+}
+
+/**
+ * 分割実行の本体
+ */
+function generateAreaSheetsBatch() {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('BATCH_STATUS') !== 'running') return;
+
+  const startTime = new Date().getTime();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const baseSheet = ss.getSheetByName(CONFIG.SHEET_TEMPLATE);
+  
+  // 1. 住所データの取得（初回のみ抽出、2回目以降はキャッシュまたは再抽出）
+  const addresses = extractDistrictAddresses();
+  const startIndex = parseInt(props.getProperty('BATCH_INDEX')) || 0;
+  let cityCounts = JSON.parse(props.getProperty('BATCH_CITY_COUNTS') || '{}');
+  
+  const chunkSize = CONFIG.CHUNK_SIZE;
+  let currentIndex = startIndex;
+
+  ss.toast(`${currentIndex}件目から処理を再開します...`, "バッチ処理中", 5);
+
+  while (currentIndex < addresses.length) {
+    // GASの制限時間（6分）の80%を超えたら中断して次を予約
+    const now = new Date().getTime();
+    if (now - startTime > 300 * 1000) { // 5分経過
+      props.setProperty('BATCH_INDEX', currentIndex.toString());
+      props.setProperty('BATCH_CITY_COUNTS', JSON.stringify(cityCounts));
+      
+      // 1分後に再実行するトリガーを設置
+      ScriptApp.newTrigger('generateAreaSheetsBatch')
+        .timeBased()
+        .after(1000 * 60)
+        .create();
+        
+      ss.toast(`${currentIndex}件で一時停止。1分後に自動再開します。`, "中断と予約", 10);
+      return;
+    }
+
+    // --- 1枚のシート生成処理 ---
+    const chunk = addresses.slice(currentIndex, currentIndex + chunkSize);
+    const firstAddress = chunk[0].address;
+    let cityName = extractCityName(firstAddress);
+
+    cityCounts[cityName] = (cityCounts[cityName] || 0) + 1;
+    const count = cityCounts[cityName];
+    let sheetName = count === 1 ? cityName : `${cityName}(${count})`;
+    
+    let sheet = ss.getSheetByName(sheetName) || baseSheet.copyTo(ss).setName(sheetName).showSheet();
+
+    // --- 座標取得（ジオコーディング） ---
+    const valuesWithCoords = chunk.map(v => {
+      const displayAddress = v.postalCode ? `〒${v.postalCode}\n${v.address}` : v.address;
+      let lat = "", lng = "";
+      try {
+        const response = Maps.newGeocoder().geocode(v.address);
+        if (response.status === 'OK' && response.results.length > 0) {
+          const loc = response.results[0].geometry.location;
+          lat = loc.lat; lng = loc.lng;
+        }
+      } catch (e) {}
+      return { text: displayAddress, lat: lat, lng: lng };
+    });
+
+    // --- データ書き込みと整形（一括処理） ---
+    const rowCount = valuesWithCoords.length;
+    if (rowCount > 0) {
+      // 住所の書き込み
+      const addrValues = valuesWithCoords.map(v => [v.text]);
+      sheet.getRange(2, 1, rowCount, 1).setValues(addrValues);
+      
+      // 座標（J, K列）の書き込み
+      const coordValues = valuesWithCoords.map(v => [v.lat, v.lng]);
+      sheet.getRange(2, 10, rowCount, 2).setValues(coordValues);
+      
+      // 整形
+      const dataRange = sheet.getRange(2, 1, rowCount, 1);
+      // 【最適化】整形（wrap/height）を廃止し、UI側で制御。シート生成を爆速化。
+    }
+
+    // 地図リンク生成
+    createAddressLinks(sheet);
+
+    // 【最適化】deleteRows ではなく hideRows を使用（再計算を避けて爆速化）
+    const lastDataRow = 1 + values.length;
+    const maxRowsInSheet = sheet.getMaxRows();
+    if (maxRowsInSheet > lastDataRow) {
+      sheet.hideRows(lastDataRow + 1, maxRowsInSheet - lastDataRow);
+    }
+
+    // 【追加】シート全体の保護設定
+    const protection = sheet.protect().setDescription(sheetName + 'の自動保護');
+    protection.removeEditors(protection.getEditors()); // オーナー以外の編集権限を剥奪
+    if (protection.canDomainEdit()) {
+      protection.setDomainEdit(false);
+    }
+
+    // 【変更】配布スタッフが入力する C列(3), D列(4) と F列(6), G列(7) の2行目以降のみ保護を解除（E列の日付は保護する）
+    const finalMaxRows = sheet.getMaxRows();
+    if (finalMaxRows > 1) {
+      const unprotectedRanges = [
+        sheet.getRange(2, 3, finalMaxRows - 1, 2), // C列, D列
+        sheet.getRange(2, 6, finalMaxRows - 1, 2)  // F列, G列
+      ];
+      protection.setUnprotectedRanges(unprotectedRanges);
+    }
+
+    currentIndex += chunkSize;
+  }
+
+  // 完了処理
+  props.setProperty('BATCH_STATUS', 'completed');
+  deleteTriggers('generateAreaSheetsBatch'); // 残ったトリガーを掃除
+  ss.toast(`${addresses.length}件の住所を抽出し、すべてのエリアシートの展開が完了しました！`, "完了", 10);
+}
+
+// =============================
+// ③ 地図リンク生成（B列に配置）
+// =============================
+function createAddressLinks(targetSheet) {
+  const sheet = targetSheet || SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  // A列（郵便番号と住所が結合されたテキスト）を取得
+  const values = sheet.getRange(2,1,lastRow-1,1).getValues();
+  const formulas = [];
+
+  for (let i = 0; i < values.length; i++) {
+    let rawText = values[i][0];
+
+    if (!rawText) {
+      formulas.push(['']);
+      continue;
+    }
+
+    // 改行がある場合は2行目（住所）を抽出、なければそのまま使用
+    let addr = rawText;
+    if (rawText.includes('\n')) {
+      addr = rawText.split('\n')[1];
+    }
+
+    const url = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addr);
+    formulas.push(['=HYPERLINK("' + url + '","📍")']);
+  }
+
+  // B列に地図リンクを出力
+  sheet.getRange(2,2,formulas.length,1).setFormulas(formulas);
+  
+  // 手動実行の場合のみ通知を出す
+  if (!targetSheet) {
+    SpreadsheetApp.getActiveSpreadsheet().toast("地図リンクを作成しました", "完了", 5);
+  }
+}
+
+// =============================
+// ④ 全シート地図生成
+// =============================
+function applyMapToAllSheets() {
+  if (isNotAdmin()) return;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const excludeSheetNames = [
+    CONFIG.SHEET_GUIDE, 
+    CONFIG.SHEET_ROSTER, 
+    CONFIG.SHEET_TEMPLATE, 
+    CONFIG.SHEET_POSTAL, 
+    CONFIG.SHEET_DISTRICT
+  ];
+  const sheets = ss.getSheets();
+
+  sheets.forEach(s => {
+    if (!excludeSheetNames.includes(s.getName())) {
+      createAddressLinks(s);
+    }
+  });
+
+  ss.toast("すべてのエリアシートの地図リンクを更新しました。", "完了", 5);
+}
+
+// =============================
+// ⑤ 一括実行
+// =============================
+function autoAll() {
+  if (isNotAdmin()) return;
+  generateAreaSheets();
+  applyMapToAllSheets();
+  SpreadsheetApp.getActiveSpreadsheet().toast("住所展開から地図生成まで、すべて完了しました！🚀", "成功", 5);
+}
+
+// =============================
+// ⑥ 全体集計
+// =============================
+
+// --- ポスティング進捗の編集（D列:完了、F列:枚数、G列:担当） ---
+function onEdit(e) {
+  onEditTrigger(e);
+}
+
+function aggregateTotalVolumes() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const targetSheetName = CONFIG.SHEET_GUIDE;
+  const excludeSheetNames = [targetSheetName, CONFIG.SHEET_ROSTER, CONFIG.SHEET_TEMPLATE, CONFIG.SHEET_POSTAL, CONFIG.SHEET_DISTRICT];
+
+  const sheets = ss.getSheets();
+  let grandTotal = 0;
+  let staffCounts = {};
+
+  // 【爆速化】全シートの H1 (シート計) のみを合計する
+  sheets.forEach(sheet => {
+    const sheetName = sheet.getName();
+    if (!excludeSheetNames.includes(sheetName) && !sheet.isSheetHidden()) {
+      // H1 からシート合計を取得
+      const sheetTotal = parseFloat(sheet.getRange("H1").getValue()) || 0;
+      grandTotal += sheetTotal;
+
+      // ランキング用のスタッフ集計（ここだけは各シートを軽く走査）
+      const lastRow = sheet.getLastRow();
+      if (lastRow >= 2) {
+        const data = sheet.getRange(2, 6, lastRow - 1, 2).getValues();
+        data.forEach(row => {
+          const count = row[0];
+          const staff = row[1];
+          if (staff && typeof count === 'number' && count > 0) {
+            staffCounts[staff] = (staffCounts[staff] || 0) + count;
+          }
+        });
+      }
+    }
+  });
+
+  const destSheet = ss.getSheetByName(targetSheetName);
+  if (destSheet) {
+    // --- 1. 戦況サマリーの更新 (B5:C7付近) ---
+    // 合計枚数
+    destSheet.getRange("B5").setValue(totalFromCheckedRows.toLocaleString() + " 枚").setFontSize(24).setFontWeight("bold").setFontColor("#1a73e8");
+    
+    // 進捗バー (SPARKLINE)
+    const goal = CONFIG.TARGET_GOAL;
+    const progressRate = totalFromCheckedRows / goal;
+    destSheet.getRange("B6").setFormula(`=SPARKLINE(${totalFromCheckedRows}, {"charttype","bar";"max",${goal};"color1","#1a73e8"})`);
+    
+    // 達成率ラベル
+    destSheet.getRange("C5").setValue(`達成率: ${Math.round(progressRate * 100)}%`).setFontSize(14).setFontWeight("bold").setFontColor("#444444");
+
+    // 更新日時
+    const now = new Date();
+    destSheet.getRange("B7").setValue("最終更新：" + Utilities.formatDate(now, "JST", "MM/dd HH:mm")).setFontSize(9).setFontColor("#666666");
+
+    // --- 2. スタッフ別ランキングの更新 ---
+    const rankingLabelText = "🏆 スタッフ別 配布ランキング";
+    let rankingLabelFinder = destSheet.createTextFinder(rankingLabelText).findNext();
+    let rRow = 35, rCol = 9;
+
+    if (rankingLabelFinder) {
+      rRow = rankingLabelFinder.getRow() + 1;
+      rCol = rankingLabelFinder.getColumn();
+      destSheet.getRange(rRow, rCol, 50, 2).clearContent();
+    } else {
+      rRow = 35; rCol = 9;
+      destSheet.getRange(rRow - 1, rCol).setValue(rankingLabelText).setFontWeight("bold").setFontSize(12);
+    }
+
+    const sortedStaff = Object.entries(staffCounts).sort((a, b) => b[1] - a[1]);
+    if (sortedStaff.length > 0) {
+      const rankingData = sortedStaff.map((s, i) => [`${i+1}位: ${s[0]}`, s[1].toLocaleString() + " 枚"]);
+      destSheet.getRange(rRow, rCol, rankingData.length, 2).setValues(rankingData);
+    }
+
+    ss.toast(`現在の配布総数は ${totalFromCheckedRows.toLocaleString()} 枚です。戦略ダッシュボードを更新しました。`, "完了", 5);
+  }
+}
+
+// =============================
+// ⑦ メニュー追加
+// =============================
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  const userEmail = Session.getActiveUser().getEmail();
+  const ownerEmail = SpreadsheetApp.getActiveSpreadsheet().getOwner().getEmail();
+  
+  // 1. ライセンスチェック（オーナーの場合のみ実行）
+  if (userEmail === ownerEmail) {
+    const license = verifyLicense(ownerEmail);
+    
+    if (license.status !== "active") {
+      ui.createMenu('⚠️ ライセンス未有効')
+        .addItem('❌ ライセンスが有効ではありません', 'showLicenseError')
+        .addToUi();
+      return;
+    }
+
+    // 2. 有効な場合のみ管理メニューを表示
+    ui.createMenu('★ポスティング管理')
+      .addItem('🗺 地図で進捗を確認（リアルタイム）', 'showMapDashboard')
+      .addSeparator()
+      .addItem('📊 全体数を集計する（ランキング更新）', 'aggregateTotalVolumes')
+      .addItem('📥 完了データのマスター抽出', 'exportAllDataToMasterSheet')
+      .addItem('📥 Googleマイマップ用KMLを出力', 'exportToKML')
+      .addItem('📄 提出用レポート(PDF)を作成', 'generateProfessionalReport')
+      .addItem('📖 スタッフ用マニュアルを作成', 'createManualSheet')
+      .addSeparator()
+      .addItem('🚀 住所展開〜地図生成まで一括実行', 'autoAll')
+      .addItem('🎨 完了行のグレーアウト設定を適用', 'applyGreyOutRuleToAllSheets')
+      .addSeparator()
+      .addSubMenu(ui.createMenu('⚙️ 詳細設定・リセット')
+        .addItem('① エリアシートを自動生成（バッチ実行）', 'startGenerateAreaSheets')
+        .addItem('② 現在シートの地図リンク生成', 'createAddressLinks')
+        .addItem('③ 全シートの地図リンクを一括更新', 'applyMapToAllSheets')
+        .addSeparator()
+        .addItem('⚙️ スマホ用自動化トリガーを設定', 'setupTriggers')
+        .addItem('📝 ガイドシートの初期設定', 'updateGuideSheetTitle')
+        .addSeparator()
+        .addItem('⚠️ エリアシートをすべて削除（リセット）', 'deleteAllAreaSheets'))
+      .addToUi();
+  }
+}
+
+/**
+ * ライセンスサーバーに状態を問い合わせる
+ */
+function verifyLicense(email) {
+  if (!CONFIG.LICENSE_API_URL) return { status: "active" }; // 開発用：URL未設定時はパス
+  
+  try {
+    const url = CONFIG.LICENSE_API_URL + "?email=" + encodeURIComponent(email);
+    const response = UrlFetchApp.fetch(url);
+    return JSON.parse(response.getContentText());
+  } catch (e) {
+    console.error("License check failed: " + e.toString());
+    return { status: "error", message: "Connection error" };
+  }
+}
+
+/**
+ * ライセンスエラーの表示
+ */
+function showLicenseError() {
+  const ui = SpreadsheetApp.getUi();
+  ui.alert("⚠️ ライセンス無効\n\nサブスクリプションの期限が切れているか、未登録のユーザーです。継続して利用するには、管理画面から更新手続きを行ってください。");
+}
+
+/**
+ * 管理者以外は実行できないように制限する関数
+ */
+function isNotAdmin() {
+  const userEmail = Session.getActiveUser().getEmail();
+  const ownerEmail = SpreadsheetApp.getActiveSpreadsheet().getOwner().getEmail();
+  
+  if (userEmail !== ownerEmail) {
+    SpreadsheetApp.getUi().alert("❌ アクセス権限がありません\n\nこの操作は管理者（オーナー）専用です。スタッフの方はスマホから入力操作のみを行ってください。");
+    return true; // 管理者ではない
+  }
+  return false; // 管理者である
+}
+
+// =============================
+// ⑧ エリアシート一括削除（リセット用）
+// =============================
+function deleteAllAreaSheets() {
+  if (isNotAdmin()) return;
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.alert('【警告】リセットの確認', 
+    `「${CONFIG.SHEET_TEMPLATE}」などの基本シート以外をすべて削除し、初期状態にリセットします。\n（※非表示になっているシートも削除されます）\n本当によろしいですか？`, 
+    ui.ButtonSet.YES_NO);
+  
+  if (response == ui.Button.YES) {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const excludeSheetNames = [
+      CONFIG.SHEET_GUIDE, 
+      CONFIG.SHEET_ROSTER, 
+      CONFIG.SHEET_TEMPLATE, 
+      CONFIG.SHEET_POSTAL, 
+      CONFIG.SHEET_DISTRICT
+    ];
+    const sheets = ss.getSheets();
+    
+    let deletedCount = 0;
+    sheets.forEach(s => {
+      if (!excludeSheetNames.includes(s.getName())) {
+        ss.deleteSheet(s);
+        deletedCount++;
+      }
+    });
+    
+    // ガイドシートの数値とランキングも0にリセット
+    aggregateTotalVolumes();
+    
+    ss.toast(`${deletedCount}枚のシートを削除し、システムをリセットしました。`, "完了", 5);
+  }
+}
+
+// =============================
+// ⑨ スマホ用自動化トリガー（日付入力＆行自動追加）
+// =============================
+function onEditTrigger(e) {
+  if (!e || !e.range) return;
+  const range = e.range;
+  const sheet = range.getSheet();
+  const sheetName = sheet.getName();
+  
+  // --- ガイドシートでのスマホ用集計ボタン（チェックボックス）の処理 ---
+  if (sheetName === CONFIG.SHEET_GUIDE) {
+    // 値が true（チェックされた）になった場合のみ
+    if (range.getValue() === true) {
+      // 集計を実行
+      aggregateTotalVolumes();
+      // 連続で押せるようにチェックを外す（少し時間をおいてから外すとUI的に分かりやすいが、GASの仕様上すぐに外す）
+      range.setValue(false);
+    }
+    return; // ガイドシートの処理はここで終了
+  }
+
+  // --- 名簿シートの処理（A列に名前が入ったら枠線を引く） ---
+  if (sheetName === CONFIG.SHEET_ROSTER) {
+    // A列（列番号1）の2行目以降が編集された場合
+    if (range.getColumn() === 1 && range.getRow() >= 2) {
+      const values = range.getValues();
+      const startRow = range.getRow();
+      
+      // 複数行ペーストにも対応
+      for (let r = 0; r < values.length; r++) {
+        const cell = sheet.getRange(startRow + r, 1);
+        const val = values[r][0];
+        
+        if (val !== "") {
+          // 文字が入っていれば黒の実線を引く
+          cell.setBorder(true, true, true, true, false, false, "black", SpreadsheetApp.BorderStyle.SOLID);
+        } else {
+          // 空欄になったら枠線を消す
+          cell.setBorder(false, false, false, false, false, false);
+        }
+      }
+    }
+    return; // 名簿シートの処理はここで終了
+  }
+
+  // --- ポスティング進捗の編集（D列:完了、F列:枚数、G列:担当） ---
+  if (col === 4 || col === 6 || col === 7) {
+    updateSheetSummary(sheet);
+    
+    // 日付の自動入力（D列がチェックされたとき）
+    if (col === 4) {
+      const isComplete = range.getValue();
+      const dateCell = sheet.getRange(row, 5); // E列
+      if (isComplete === true) {
+        const now = new Date();
+        const formattedDate = Utilities.formatDate(now, "JST", "MM/dd HH:mm");
+        dateCell.setValue(formattedDate);
+      } else {
+        dateCell.setValue("");
+      }
+    }
+  }
+
+  // 原本や設定シートなどの基本シートは除外
+  const excludeSheetNames = [CONFIG.SHEET_ROSTER, CONFIG.SHEET_TEMPLATE, CONFIG.SHEET_POSTAL, CONFIG.SHEET_DISTRICT];
+  if (excludeSheetNames.includes(sheetName)) return;
+
+  // D列（完了☑️）の編集のみを対象とする（列番号4）
+  if (range.getColumn() !== 4) return;
+  
+  // 複数セル同時の変更は無視
+  if (range.getNumRows() > 1 || range.getNumColumns() > 1) return;
+  
+  const row = range.getRow();
+  if (row < 2) return; // ヘッダーは無視
+  
+  const isChecked = range.getValue() === true;
+  if (!isChecked) {
+    // チェックが外された場合は、間違えて押したとみなして「日付（E列）」を空に戻す
+    sheet.getRange(row, 5).clearContent();
+    return; 
+  }
+
+  // --- 0. 入力漏れチェック ---
+  // F列（枚数:6）と G列（担当:7）が入力されているか確認
+  const checkValues = sheet.getRange(row, 6, 1, 2).getValues()[0];
+  const countVal = checkValues[0];
+  const staffVal = checkValues[1];
+
+  if (!countVal || !staffVal) {
+    // 入力漏れがある場合はチェックを強制的に外す
+    range.setValue(false);
+    SpreadsheetApp.getActiveSpreadsheet().toast("【エラー】「枚数」と「担当」を選んでからチェックを入れてください！", "入力不足", 5);
+    return;
+  }
+  
+  // --- 1. 日付の自動入力 ---
+  const dateCell = sheet.getRange(row, 5); // E列（列番号5）
+  // すでに日付が入っている場合は上書きしない（誤タップ防止）
+  if (!dateCell.getValue()) {
+    const today = new Date();
+    const formattedDate = Utilities.formatDate(today, Session.getScriptTimeZone(), "yyyy/MM/dd");
+    dateCell.setValue(formattedDate);
+  }
+  
+  // --- 2. 行の自動複製 ---
+  // A列の住所をチェック（空なら複製しない）
+  const addressVal = sheet.getRange(row, 1).getValue();
+  if (!addressVal) return;
+  
+  // すでにすぐ下に同じ住所の未チェック行が存在する場合は複製しない（無限増殖防止）
+  const nextRowAddress = sheet.getRange(row + 1, 1).getValue();
+  const nextRowChecked = sheet.getRange(row + 1, 4).getValue();
+  if (nextRowAddress === addressVal && nextRowChecked !== true) {
+    return; // すでに予備行があるので何もしない
+  }
+  
+  // 現在の行の直下に1行挿入
+  sheet.insertRowAfter(row);
+  const newRow = row + 1;
+  
+  // 現在の行全体をコピーし、新しい行にペースト（フォーマットや入力規則ごとコピー）
+  sheet.getRange(row, 1, 1, sheet.getMaxColumns()).copyTo(sheet.getRange(newRow, 1));
+  
+  // 新しい行の C列(メモ)、D列(完了)、E列(日付)、F列(枚数)、G列(担当) をクリア（空にする）
+  sheet.getRange(newRow, 3, 1, 5).clearContent();
+  // D列のチェックボックスを確実にOFF(false)にする
+  sheet.getRange(newRow, 4).setValue(false);
+  
+  // --- 3. 新しい行の保護を解除 ---
+  // 新しく増えた行に対してもスマホから編集できるように保護範囲をアップデートする
+  const protections = sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+  if (protections.length > 0) {
+    const protection = protections[0];
+    const newMaxRows = sheet.getMaxRows();
+    // 2行目から一番下の行まで、C,D列とF,G列の保護を解除する（E列の日付は保護）
+    const unprotectedRanges = [
+      sheet.getRange(2, 3, newMaxRows - 1, 2), // C列, D列
+      sheet.getRange(2, 6, newMaxRows - 1, 2)  // F列, G列
+    ];
+    protection.setUnprotectedRanges(unprotectedRanges);
+  }
+}
+
+// =============================
+// ⑩ インストーラブルトリガーの設定
+// =============================
+function setupTriggers() {
+  if (isNotAdmin()) return;
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.alert('確認', 'スマホ用の自動化システム（日付自動入力＆次回の行の自動追加）を起動します。\nよろしいですか？', ui.ButtonSet.YES_NO);
+  
+  if (response == ui.Button.YES) {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const triggers = ScriptApp.getUserTriggers(ss);
+    
+    // 既存の onEditTrigger があればすべて削除
+    let deletedCount = 0;
+    for (let i = 0; i < triggers.length; i++) {
+      if (triggers[i].getHandlerFunction() === 'onEditTrigger') {
+        ScriptApp.deleteTrigger(triggers[i]);
+        deletedCount++;
+      }
+    }
+    
+    // 新しくインストーラブルトリガーを作成
+    ScriptApp.newTrigger('onEditTrigger')
+      .forSpreadsheet(ss)
+      .onEdit()
+      .create();
+      
+    ss.toast("スマホ用自動化システムが起動しました！スマホからチェックを入れてテストしてみてください。", "起動完了", 5);
+  }
+}
+
+// =============================
+// ⑪ ガイドシートの支部名・QRコード更新
+// =============================
+function updateGuideSheetTitle() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const guideSheet = ss.getSheetByName(CONFIG.SHEET_GUIDE);
+  
+  if (!guideSheet) {
+    ss.toast("ガイドシートが見つかりません。", "エラー", 5);
+    return;
+  }
+  
+  // --- 1. タイトルとダッシュボードのデザイン ---
+  const ssName = ss.getName();
+  const branchName = ssName.split(/[ 　]/)[0] || "選挙区";
+  
+  // タイトルエリア
+  guideSheet.getRange("A1:J1").merge().setBackground("#1a237e").setFontColor("#ffffff").setFontSize(18).setFontWeight("bold").setVerticalAlignment("middle").setValue(`ポスティング戦略ダッシュボード 【${branchName}】`);
+  
+  // 戦況サマリーエリア (B4:C7)
+  guideSheet.getRange("B4:C4").merge().setValue("📊 現在の配布進捗").setFontWeight("bold").setFontColor("#1a237e");
+  guideSheet.getRange("B5:C7").setBackground("#f8f9fa").setBorder(true, true, true, true, null, null, "#dddddd", SpreadsheetApp.BorderStyle.SOLID);
+  
+  // --- 2. QRコードの配置 (B28:C36) ---
+  const ssUrl = ss.getUrl() + "#gid=" + guideSheet.getSheetId();
+  const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(ssUrl)}`;
+  guideSheet.getRange("B28:C36").breakApart();
+  guideSheet.getRange("B28:C36").merge().setHorizontalAlignment("center").setVerticalAlignment("middle");
+  guideSheet.getRange("B28").setFormula(`=IMAGE("${qrApiUrl}", 1)`);
+
+  // --- 3. シート保護 ---
+  const protections = guideSheet.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+  protections.forEach(p => p.remove());
+
+  const protection = guideSheet.protect().setDescription('ダッシュボード保護');
+  protection.removeEditors(protection.getEditors());
+  
+  const unprotectedRanges = [];
+  const validations = guideSheet.getDataRange().getDataValidations();
+  for (let r = 0; r < validations.length; r++) {
+    for (let c = 0; c < validations[r].length; c++) {
+      if (validations[r][c] != null && validations[r][c].getCriteriaType() == SpreadsheetApp.DataValidationCriteria.CHECKBOX) {
+        unprotectedRanges.push(guideSheet.getRange(r + 1, c + 1));
+      }
+    }
+  }
+  if (unprotectedRanges.length > 0) protection.setUnprotectedRanges(unprotectedRanges);
+
+  ss.toast("ダッシュボードのデザインをプロ仕様に更新しました。", "完了", 5);
+}
+
+// =============================
+// ⑫ 完了行のグレーアウト設定（全シート適用）
+// =============================
+function applyGreyOutRuleToAllSheets() {
+  if (isNotAdmin()) return;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheets = ss.getSheets();
+  // 名簿や設定用シート以外すべてに適用（原本含む）
+  const excludeSheetNames = [CONFIG.SHEET_GUIDE, CONFIG.SHEET_ROSTER, CONFIG.SHEET_POSTAL, CONFIG.SHEET_DISTRICT, CONFIG.SHEET_MASTER_EXPORT];
+  
+  let count = 0;
+  sheets.forEach(sheet => {
+    if (!excludeSheetNames.includes(sheet.getName())) {
+      const range = sheet.getRange("A2:G"); // A〜G列を対象
+      
+      // 条件付き書式のルール作成
+      const rule = SpreadsheetApp.newConditionalFormatRule()
+        .whenFormulaSatisfied("=$D2=TRUE") // D列（完了）がチェックされている場合
+        .setBackground("#E0E0E0")          // 背景を薄いグレーに
+        .setFontColor("#808080")           // 文字色をグレーに
+        .setRanges([range])
+        .build();
+      
+      const rules = sheet.getConditionalFormatRules();
+      // すでに同じ「$D2=TRUE」のルールがある場合は重複しないように削除
+      const newRules = rules.filter(r => {
+        const condition = r.getBooleanCondition();
+        return !(condition && condition.getCriteriaValues()[0] === "=$D2=TRUE");
+      });
+      newRules.push(rule);
+      sheet.setConditionalFormatRules(newRules);
+      count++;
+    }
+  });
+  
+  ss.toast(`${count}枚のシートにグレーアウト設定を適用しました。`, "完了", 5);
+}
+
+// =============================
+// ⑬ 全エリア完了データのマスター抽出
+// =============================
+function exportAllDataToMasterSheet() {
+  if (isNotAdmin()) return;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const masterSheetName = CONFIG.SHEET_MASTER_EXPORT;
+  let masterSheet = ss.getSheetByName(masterSheetName);
+  
+  // シートがなければ作成、あれば中身をクリア
+  if (!masterSheet) {
+    masterSheet = ss.insertSheet(masterSheetName);
+  } else {
+    masterSheet.clear();
+  }
+  
+  // ヘッダー（1行目）
+  const headers = ["エリア名", "住所・郵便番号", "地図URL", "メモ", "完了", "日付", "枚数", "担当"];
+  masterSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  masterSheet.getRange(1, 1, 1, headers.length).setBackground("#4a86e8").setFontColor("white").setFontWeight("bold");
+  
+  const excludeSheetNames = ["初めての方「使い方ガイド」", "名簿", "原本", "郵便番号", "区割り", masterSheetName];
+  const sheets = ss.getSheets();
+  
+  let allExportData = [];
+  
+  sheets.forEach(sheet => {
+    const sheetName = sheet.getName();
+    if (!excludeSheetNames.includes(sheetName)) {
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) return;
+      
+      // A〜G列（1〜7列目）を取得
+      const data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
+      
+      data.forEach(row => {
+        const isComplete = row[3]; // D列
+        if (isComplete === true) {
+          // エリア名を先頭に付けて、残りA〜G列のデータを結合
+          allExportData.push([sheetName, row[0], row[1], row[2], row[3], row[4], row[5], row[6]]);
+        }
+      });
+    }
+  });
+  
+  if (allExportData.length > 0) {
+    masterSheet.getRange(2, 1, allExportData.length, allExportData[0].length).setValues(allExportData);
+    // 日付列（F列）のフォーマット
+    masterSheet.getRange(2, 6, allExportData.length, 1).setNumberFormat("yyyy/mm/dd");
+    // 列幅の自動調整
+    masterSheet.autoResizeColumns(1, headers.length);
+    masterSheet.setColumnWidth(2, 300); // 住所は少し広めに
+    
+    ss.toast(`${allExportData.length}件のデータを抽出しました！`, "完了", 5);
+  } else {
+    ss.toast("完了済みのデータが見つかりませんでした。", "通知", 5);
+  }
+  
+  // マスターシートをアクティブにする
+  masterSheet.activate();
+}
+
+// =============================
+// ⑭ 提出用レポート（プロ仕様）生成
+// =============================
+function generateProfessionalReport() {
+  if (isNotAdmin()) return;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const reportSheetName = CONFIG.SHEET_REPORT;
+  let reportSheet = ss.getSheetByName(reportSheetName);
+  
+  // シートがなければ作成、あれば中身をクリアしてリセット
+  if (!reportSheet) {
+    reportSheet = ss.insertSheet(reportSheetName);
+  } else {
+    reportSheet.clear();
+    reportSheet.clearFormats();
+    reportSheet.clearNotes();
+  }
+  
+  // 枠線を消す（エラー回避のため一時的に無効化）
+  // reportSheet.setHideGridlines(true);
+  
+  ss.toast("報告書を作成中です...", "処理中", 10);
+
+  // --- 1. データ集計 ---
+  const excludeSheetNames = [
+    CONFIG.SHEET_GUIDE, 
+    CONFIG.SHEET_ROSTER, 
+    CONFIG.SHEET_TEMPLATE, 
+    CONFIG.SHEET_POSTAL, 
+    CONFIG.SHEET_DISTRICT, 
+    reportSheetName, 
+    CONFIG.SHEET_MASTER_EXPORT
+  ];
+  const sheets = ss.getSheets();
+  
+  let totalRows = 0;
+  let completedRows = 0;
+  let totalFlyers = 0;
+  let areaStats = [];
+  let staffCounts = {};
+
+  sheets.forEach(sheet => {
+    const name = sheet.getName();
+    if (!excludeSheetNames.includes(name) && !sheet.isSheetHidden()) {
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) return;
+      
+      const data = sheet.getRange(2, 4, lastRow - 1, 4).getValues(); // D(完了), E, F(枚数), G(担当)
+      let sheetTotal = lastRow - 1;
+      let sheetDone = 0;
+      
+      data.forEach(row => {
+        const isDone = row[0] === true;
+        const count = parseFloat(row[2]) || 0;
+        const staff = row[3];
+        
+        if (isDone) {
+          sheetDone++;
+          totalFlyers += count;
+          if (staff) {
+            staffCounts[staff] = (staffCounts[staff] || 0) + count;
+          }
+        }
+      });
+      
+      totalRows += sheetTotal;
+      completedRows += sheetDone;
+      areaStats.push([name, sheetTotal, sheetDone, (sheetDone / sheetTotal)]);
+    }
+  });
+
+  const progressRate = totalRows > 0 ? (completedRows / totalRows) : 0;
+
+  // --- 2. レイアウト構築 ---
+  // A列の幅を調整
+  reportSheet.setColumnWidth(1, 30);
+  reportSheet.setColumnWidth(2, 150);
+  reportSheet.setColumnWidth(3, 100);
+  reportSheet.setColumnWidth(4, 100);
+  reportSheet.setColumnWidth(5, 120);
+  
+  // タイトルエリア
+  const branchName = ss.getName().split(/[ 　]/)[0] || "三重第2区";
+  reportSheet.getRange("B2:E2").merge().setValue("ポスティング活動 最終報告書").setFontSize(22).setFontWeight("bold").setHorizontalAlignment("center");
+  reportSheet.getRange("B3:E3").merge().setValue(`組織支部：${branchName}`).setFontSize(12).setHorizontalAlignment("right");
+  reportSheet.getRange("B4:E4").merge().setValue(`作成日時：${Utilities.formatDate(new Date(), "JST", "yyyy年MM月dd日 HH:mm")}`).setFontSize(10).setHorizontalAlignment("right");
+
+  // サマリーエリア
+  reportSheet.getRange("B6:C6").merge().setValue("■ 総合進捗状況").setFontWeight("bold").setFontSize(14);
+  reportSheet.getRange("B7").setValue("総ターゲット件数");
+  reportSheet.getRange("C7").setValue(totalRows + " 箇所").setHorizontalAlignment("right");
+  reportSheet.getRange("B8").setValue("完了済み件数");
+  reportSheet.getRange("C8").setValue(completedRows + " 箇所").setHorizontalAlignment("right");
+  reportSheet.getRange("B9").setValue("総配布枚数");
+  reportSheet.getRange("C9").setValue(totalFlyers.toLocaleString() + " 枚").setHorizontalAlignment("right");
+  
+  // 進捗率（大きな文字で）
+  reportSheet.getRange("D7:E8").merge().setValue(Math.floor(progressRate * 100) + "%").setFontSize(36).setFontWeight("bold").setHorizontalAlignment("center").setVerticalAlignment("middle").setBackground("#f3f3f3");
+  reportSheet.getRange("D9:E9").merge().setValue("全体進捗率").setHorizontalAlignment("center").setFontSize(10);
+
+  // エリア別状況
+  reportSheet.getRange("B11:E11").merge().setValue("■ エリア別進捗一覧").setFontWeight("bold").setFontSize(12).setBackground("#eeeeee");
+  const areaHeaders = ["エリア名", "予定数", "完了数", "進捗率"];
+  reportSheet.getRange(12, 2, 1, 4).setValues([areaHeaders]).setBackground("#444444").setFontColor("white").setFontWeight("bold");
+  
+  if (areaStats.length > 0) {
+    reportSheet.getRange(13, 2, areaStats.length, 4).setValues(areaStats.map(s => [s[0], s[1], s[2], s[3]]));
+    reportSheet.getRange(13, 5, areaStats.length, 1).setNumberFormat("0.0%");
+    // 罫線
+    reportSheet.getRange(12, 2, areaStats.length + 1, 4).setBorder(true, true, true, true, true, true);
+  }
+
+  // スタッフ別貢献度（TOP 10）
+  const startRowRanking = 13 + areaStats.length + 2;
+  reportSheet.getRange(startRowRanking, 2, 1, 4).merge().setValue("■ スタッフ別配布枚数（TOP10）").setFontWeight("bold").setFontSize(12).setBackground("#eeeeee");
+  
+  const sortedStaff = Object.entries(staffCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  if (sortedStaff.length > 0) {
+    const rankingHeaders = ["順位", "氏名", "配布枚数", "備考"];
+    reportSheet.getRange(startRowRanking + 1, 2, 1, 4).setValues([rankingHeaders]).setBackground("#444444").setFontColor("white").setFontWeight("bold");
+    const rankingBody = sortedStaff.map((s, i) => [i + 1, s[0], s[1].toLocaleString() + " 枚", ""]);
+    reportSheet.getRange(startRowRanking + 2, 2, rankingBody.length, 4).setValues(rankingBody);
+    reportSheet.getRange(startRowRanking + 1, 2, rankingBody.length + 1, 4).setBorder(true, true, true, true, true, true);
+  }
+
+  // PDF出力リンク（シートには書かず、ポップアップで出す）
+  const pdfUrl = `https://docs.google.com/spreadsheets/d/${ss.getId()}/export?format=pdf&gid=${reportSheet.getSheetId()}&size=A4&portrait=true&fitw=true&gridlines=false`;
+  
+  const html = `<div style="font-family: 'Open Sans', sans-serif; text-align: center; padding: 20px; background-color: #f8f9fa;">
+    <p style="font-size: 18px; color: #202124; margin-bottom: 25px; font-weight: bold;">📊 報告書が完成しました！</p>
+    <a href="${pdfUrl}" target="_blank" onclick="google.script.host.close()" style="display: inline-block; padding: 18px 35px; background: linear-gradient(135deg, #1a73e8, #174ea6); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 20px; box-shadow: 0 4px 15px rgba(26, 115, 232, 0.3); transition: all 0.3s ease;">📥 PDFをダウンロードする</a>
+    <p style="font-size: 13px; color: #5f6368; margin-top: 25px;">※ボタンを押すと別タブでPDFが開きます。<br>開いた後に「保存」や「印刷」を行ってください。</p>
+  </div>`;
+  
+  const userInterface = HtmlService.createHtmlOutput(html)
+    .setWidth(450)
+    .setHeight(280);
+  
+  SpreadsheetApp.getUi().showModalDialog(userInterface, 'プロフェッショナル報告書生成');
+
+  reportSheet.activate();
+  ss.toast("プロフェッショナル報告書が完成しました！", "完了", 5);
+}
+
+// =============================
+// ⑮ スタッフ用かんたんマニュアル（70代対応）生成
+// =============================
+function createManualSheet() {
+  if (isNotAdmin()) return;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const manualSheetName = CONFIG.SHEET_MANUAL;
+  let sheet = ss.getSheetByName(manualSheetName);
+  
+  if (!sheet) {
+    sheet = ss.insertSheet(manualSheetName);
+  } else {
+    sheet.clear();
+    sheet.clearFormats();
+  }
+  
+  // 枠線を消す（エラー回避のため無効化）
+  // sheet.setHideGridlines(true);
+  sheet.setColumnWidth(1, 40);
+  sheet.setColumnWidth(2, 400);
+  sheet.setColumnWidth(3, 150);
+  
+  // --- タイトル ---
+  sheet.getRange("B2:C2").merge().setValue("ポスティング報告 らくらくガイド").setFontSize(24).setFontWeight("bold").setFontColor("#1a73e8");
+  sheet.getRange("B3:C3").merge().setValue("〜 スマホで簡単！3つのステップ 〜").setFontSize(14).setFontColor("#666666");
+  
+  // --- STEP 1 ---
+  sheet.getRange("B5").setValue("① 地図を開く").setFontSize(18).setFontWeight("bold").setBackground("#e8f0fe");
+  sheet.getRange("B6").setValue("自分の担当エリアの表にある「青い色の地図リンク」を押してください。Googleマップが開きます。").setFontSize(12).setWrap(true);
+  
+  // --- STEP 2 ---
+  sheet.getRange("B8").setValue("② ポスティングをする").setFontSize(18).setFontWeight("bold").setBackground("#e8f0fe");
+  sheet.getRange("B9").setValue("地図を見ながら、いつものようにチラシを配ってください。").setFontSize(12).setWrap(true);
+  
+  // --- STEP 3 ---
+  sheet.getRange("B11").setValue("③ スマホで報告する").setFontSize(18).setFontWeight("bold").setBackground("#fce8e6");
+  sheet.getRange("B12").setValue("配り終わったら、スプレッドシートの自分の行に以下の2つを入力します。").setFontSize(12);
+  sheet.getRange("B13").setValue("　・「枚数」を入れる\n　・「完了」の四角をポチッと押す").setFontSize(14).setFontWeight("bold").setFontColor("#d93025");
+  sheet.getRange("B14").setValue("※チェックを入れると、日付と時刻が自動で入ります。").setFontSize(10).setFontColor("#666666");
+
+  // --- 合計確認のコツ ---
+  sheet.getRange("B16:C16").merge().setValue("■ 全体の合計を確認するには？").setFontWeight("bold").setFontSize(14).setBackground("#eeeeee");
+  sheet.getRange("B17").setValue("一番最初の「使い方ガイド」シートにある「集計ボタン」をチェックしてください。今の合計枚数と、みんなのランキングが更新されます！").setFontSize(12).setWrap(true);
+
+  // --- メッセージ ---
+  sheet.getRange("B19:C19").merge().setValue("いつも活動ありがとうございます！無理せず安全に進めましょう。").setFontStyle("italic").setFontColor("#34a853").setHorizontalAlignment("center");
+
+  // PDF出力リンク
+  const pdfUrl = `https://docs.google.com/spreadsheets/d/${ss.getId()}/export?format=pdf&gid=${sheet.getSheetId()}&size=A4&portrait=true&fitw=true&gridlines=false`;
+  sheet.getRange("B21:C21").merge().setValue("📥 このマニュアルをPDFにする（印刷・LINE配布用）").setFontWeight("bold").setFontColor("blue").setHorizontalAlignment("center");
+  sheet.getRange("B21").setFormula(`=HYPERLINK("${pdfUrl}", "ここをクリックしてマニュアルPDFを開く")`);
+
+  sheet.activate();
+  ss.toast("らくらくマニュアルを作成しました！", "完了", 5);
+}
+// =============================
+// ⑯ 地図ダッシュボード機能
+// =============================
+
+/**
+ * 地図ダッシュボードを表示する（管理者用）
+ */
+function showMapDashboard() {
+  const html = HtmlService.createHtmlOutputFromFile('map_dashboard')
+      .setWidth(1000)
+      .setHeight(700)
+      .setTitle('リアルタイム進捗マップ');
+  SpreadsheetApp.getUi().showModalDialog(html, 'ポスティング戦況マップ');
+}
+
+/**
+ * 全データをGoogleマイマップ用KML形式で出力する
+ */
+function exportToKML() {
+  if (isNotAdmin()) return;
+  const data = getMapData();
+  const points = data.points;
+  
+  let kml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  kml += '<kml xmlns="http://www.opengis.net/kml/2.2">\n';
+  kml += '  <Document>\n';
+  kml += '    <name>ポスティング戦況マップ</name>\n';
+  
+  // スタイル定義（未完了：赤、完了：緑）
+  kml += '    <Style id="todo"><IconStyle><color>ff4b4bf2</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/paddle/red-circle.png</href></Icon></IconStyle></Style>\n';
+  kml += '    <Style id="done"><IconStyle><color>ff81c995</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-circle.png</href></Icon></IconStyle></Style>\n';
+  
+  points.forEach(p => {
+    const style = p.status === "done" ? "#done" : "#todo";
+    const desc = `エリア: ${p.area}\n担当: ${p.staff}\n投票率: ${p.turnout}%\n戦略: ${p.strategy}`;
+    
+    kml += '    <Placemark>\n';
+    kml += `      <name>${p.address}</name>\n`;
+    kml += `      <description>${desc}</description>\n`;
+    kml += `      <styleUrl>${style}</styleUrl>\n`;
+    kml += '      <address>' + p.address + '</address>\n';
+    kml += '    </Placemark>\n';
+  });
+  
+  kml += '  </Document>\n';
+  kml += '</kml>';
+  
+  // ファイルとして保存（Googleドライブ）
+  const fileName = `posting_map_${Utilities.formatDate(new Date(), "JST", "MMdd_HHmm")}.kml`;
+  const file = DriveApp.createFile(fileName, kml, MimeType.XML);
+  
+  const ui = SpreadsheetApp.getUi();
+  const html = HtmlService.createHtmlOutput(
+    `<p>Googleマイマップ用のKMLファイルを作成しました。</p>
+     <p><a href="${file.getDownloadUrl()}" target="_blank" style="font-size:18px; font-weight:bold; color:#1a73e8;">📥 KMLファイルをダウンロード</a></p>
+     <p style="font-size:12px; color:#666;">※ダウンロード後、Googleマイマップの「インポート」から読み込んでください。</p>`
+  ).setWidth(400).setHeight(200);
+  
+  ui.showModalDialog(html, "KMLエクスポート完了");
+}
+/**
+ * 投票率データの読み込みとマップ化（共通キャッシュ利用）
+ */
+function getTurnoutLookupMap() {
+  return getCachedData("turnout_lookup", () => {
+    const data = getCsvOrSheetData(CONFIG.TURNOUT_CSV);
+    const lookup = {}; // JSON化のためオブジェクト
+    if (data) {
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (row && row[0] && row[1]) {
+          lookup[row[0] + row[1]] = { rate: row[2], priority: row[3] || 0, memo: row[4] || "" };
+        }
+      }
+    }
+    return lookup;
+  }, 3600);
+}
+
+/**
+ * 地図表示用のデータを取得（キャッシュ対応）
+ */
+function getMapData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const cacheKey = "map_points_v2_" + ss.getId();
+  return getCachedData(cacheKey, () => aggregateMapDataPoints(), 300);
+}
+
+/**
+ * 実際の集計処理
+ */
+function aggregateMapDataPoints() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const turnoutLookup = getTurnoutLookupMap();
+  const excludeSheetNames = [CONFIG.SHEET_GUIDE, CONFIG.SHEET_ROSTER, CONFIG.SHEET_TEMPLATE, CONFIG.SHEET_POSTAL, CONFIG.SHEET_DISTRICT];
+    CONFIG.SHEET_MASTER_EXPORT,
+    CONFIG.SHEET_REPORT,
+    CONFIG.SHEET_MANUAL
+  ];
+  
+  const sheets = ss.getSheets();
+  let mapPoints = [];
+  let townSummary = {}; // 町丁目ごとの集計用
+  
+  sheets.forEach(sheet => {
+    const sheetName = sheet.getName();
+    if (!excludeSheetNames.includes(sheetName) && !sheet.isSheetHidden()) {
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) return;
+      
+      const data = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
+      
+      data.forEach(row => {
+        let rawAddr = row[0];
+        if (!rawAddr) return;
+        
+        let addr = rawAddr.includes('\n') ? rawAddr.split('\n')[1] : rawAddr;
+        const isDone = row[3] === true;
+        const staff = row[6] || "未定";
+        
+        // 投票率の紐付け
+        let turnout = { rate: "-", priority: 0, memo: "" };
+        let matchedTownKey = "";
+        for (let [key, val] of turnoutLookup) {
+          if (addr.includes(key)) {
+            turnout = val;
+            matchedTownKey = key;
+            break;
+          }
+        }
+        
+        // 町丁目サマリーの集計
+        const townKey = matchedTownKey || extractTownName(addr);
+        if (!townSummary[townKey]) {
+          townSummary[townKey] = { total: 0, done: 0, address: addr }; // 代表住所を1つ保持
+        }
+        townSummary[townKey].total++;
+        if (isDone) townSummary[townKey].done++;
+        
+        mapPoints.push({
+          address: addr,
+          status: isDone ? "done" : "todo",
+          staff: staff,
+          area: sheetName,
+          turnout: turnout.rate,
+          priority: turnout.priority,
+          strategy: turnout.memo,
+          town: townKey
+        });
+      });
+    }
+  });
+  
+  return {
+    points: mapPoints,
+    summary: townSummary
+  };
+}
+
+/**
+ * 住所から町丁目名を推測して抽出する
+ */
+function extractTownName(addr) {
+  // 市区町村の後の部分を抽出（簡易的な実装）
+  const match = addr.match(/市(.+?([0-9０-９]|丁目|$))/);
+  return match ? match[1].replace(/[0-9０-９]|丁目/g, "") : "不明";
+}
+
+/**
+ * 住所から市区町村名を抽出
+ */
+function extractCityName(addr) {
+  const match = addr.match(/^(.+?市)/);
+  return match ? match[1] : "エリア";
+}
+
+/**
+ * 特定の関数名のトリガーをすべて削除
+ */
+function deleteTriggers(functionName) {
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(t => {
+    if (t.getHandlerFunction() === functionName) {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+}
+
+/**
+ * シート保護の共通処理
+ */
+function setupSheetProtection(sheet, sheetName) {
+  const protection = sheet.protect().setDescription(sheetName + "の自動保護");
+  protection.removeEditors(protection.getEditors());
+  if (protection.canDomainEdit()) protection.setDomainEdit(false);
+  
+  const finalMaxRows = sheet.getMaxRows();
+  if (finalMaxRows > 1) {
+    const unprotectedRanges = [
+      sheet.getRange(2, 3, finalMaxRows - 1, 2), // メモ, 完了
+      sheet.getRange(2, 6, finalMaxRows - 1, 2)  // 枚数, 担当
+    ];
+    protection.setUnprotectedRanges(unprotectedRanges);
+  }
+}
+
+/**
+ * 汎用キャッシュ取得・保存関数
+ * @param {string} key キャッシュキー
+ * @param {function} fetchFunction キャッシュがない場合に実行する関数
+ * @param {number} ttl 有効期限（秒）
+ */
+function getCachedData(key, fetchFunction, ttl = 300) {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(key);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (e) {
+      // パース失敗時は再取得
+    }
+  }
+
+  const data = fetchFunction();
+  try {
+    const jsonStr = JSON.stringify(data);
+    if (jsonStr.length < 100 * 1024) { // 100KB制限チェック
+      cache.put(key, jsonStr, ttl);
+    }
+  } catch (e) {
+    // 100KB超えやシリアライズ失敗時はキャッシュしない
+  }
+  return data;
+}
+
+/**
+ * 特定シートの合計配布枚数を再計算して H1 に保存する（差分更新の基盤）
+ */
+function updateSheetSummary(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+  
+  // D列(完了)とF列(枚数)を取得してそのシートの合計を算出
+  const data = sheet.getRange(2, 4, lastRow - 1, 3).getValues();
+  let sheetTotal = 0;
+  data.forEach(row => {
+    if (row[0] === true && typeof row[2] === 'number') {
+      sheetTotal += row[2];
+    }
+  });
+  
+  // H1セルに結果を保存
+  sheet.getRange("H1").setValue(sheetTotal);
+}
+
+/**
+ * WebアプリとしてのAPIエンドポイント
+ * 地図データ等をJSON形式で返却し、外部UIからの利用を可能にする
+ */
+function doGet(e) {
+  const data = getMapData();
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}

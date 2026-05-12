@@ -1,0 +1,8 @@
+{
+  "project": "posting-map-system",
+  "mode": "strict",
+  "rules": {
+    "no_guess": true,
+    "no_address_generation": true
+  }
+}

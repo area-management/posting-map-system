@@ -1,0 +1,7 @@
+# Once allow everything but ignore backups
+node_modules/
+.git/
+backup_*/
+*.gs.bak
+gas_v2_backup.gs
+gas.gs

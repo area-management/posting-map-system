@@ -1,0 +1,36 @@
+<style>
+  #area-list { margin-top: 8px; }
+  .area-item {
+    background: var(--card); border-radius: 20px; padding: 18px 20px;
+    margin-bottom: 14px; display: flex; flex-direction: column; gap: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    border: 1px solid transparent;
+  }
+  .area-item:active { transform: scale(0.97); background: #fafafa; }
+  
+  .area-top { display: flex; align-items: center; gap: 12px; }
+  .area-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
+  .area-name { flex: 1; font-size: 16px; font-weight: 900; color: var(--navy); letter-spacing: -0.01em; }
+  .area-meta { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.05em; }
+  
+  .area-progress-bg { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; position: relative; }
+  .area-progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease-out; }
+  
+  .area-chevron { color: #d0d7de; font-size: 18px; font-weight: 400; }
+</style>
+
+<div id="page-area" class="page">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+    <h2 style="font-size: 20px; font-weight: 900;">エリア一覧</h2>
+    <div style="font-size: 13px; font-weight: 700; color: var(--muted);">
+      全 <span id="area-total" style="color: var(--text);">0</span> エリア
+    </div>
+  </div>
+
+  <div id="area-list">
+    <div style="padding: 40px; text-align: center; color: var(--muted);">
+      データを読み込み中...
+    </div>
+  </div>
+</div>

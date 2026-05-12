@@ -1,0 +1,18 @@
+0 verbose cli /usr/local/bin/node /usr/local/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@11.12.1
+2 info using node@v24.15.0
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/Volumes/SSD_DATA/posting-map-system/.npmrc
+5 silly config load:file:/usr/local/etc/npmrc
+6 verbose title npm exec clasp push -f
+7 verbose argv "exec" "--" "clasp" "push" "-f"
+8 verbose logfile logs-max:10 dir:/Volumes/SSD_DATA/posting-map-system/.npm/_logs/2026-05-11T20_52_38_626Z-
+9 verbose logfile /Volumes/SSD_DATA/posting-map-system/.npm/_logs/2026-05-11T20_52_38_626Z-debug-0.log
+10 silly logfile done cleaning log files
+11 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with ENOTFOUND
+12 verbose cwd /Volumes/SSD_DATA/posting-map-system
+13 verbose os Darwin 25.4.0
+14 verbose node v24.15.0
+15 verbose npm  v11.12.1
+16 verbose exit 1
+17 verbose code 1

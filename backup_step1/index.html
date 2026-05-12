@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ポスティングアプリ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Base ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --navy: #0a2540;
+      --blue: #0077b6;
+      --cyan: #00b4d8;
+      --red: #e63946;
+      --green: #2dc653;
+      --bg: #f0f4f8;
+      --card: #ffffff;
+      --text: #1a2533;
+      --muted: #6b7a8d;
+      --border: #e2e8f0;
+      --header-h: 60px;
+      --nav-h: 64px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 20px;
+    }
+
+    /* ── Pages ── */
+    .page {
+      display: none;
+      padding: 16px;
+      min-height: 100%;
+    }
+
+    .page.active {
+      display: block;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── Loading ── */
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--navy);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #loading span {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 50px;
+      background: var(--navy);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      z-index: 10000;
+      display: none;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        top: -50px;
+        opacity: 0;
+      }
+
+      to {
+        top: 20px;
+        opacity: 1;
+      }
+    }
+
+    /* ── Shared Elements ── */
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      margin: 24px 4px 12px;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <span>読み込み中...</span>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="app">
+    <?!= include('header'); ?>
+
+    <main id="content">
+      <?!= include('guide'); ?>
+      <?!= include('area'); ?>
+      <?!= include('area-detail'); ?>
+      <?!= include('progress'); ?>
+      <?!= include('settings'); ?>
+    </main>
+
+    <?!= include('nav'); ?>
+  </div>
+
+  <script>
+    /**
+     * 最強安定UI制御ロジック
+     */
+    let allPoints = [];
+    let areaSummary = {};
+    let roster = [];
+
+    // =======================
+    // DOM安全操作関数
+    // =======================
+    function $(id) { return document.getElementById(id); }
+
+    function safeText(id, val) {
+      const el = $(id);
+      if (el) el.textContent = val;
+    }
+
+    function safeHTML(id, val) {
+      const el = $(id);
+      if (el) el.innerHTML = val;
+    }
+
+    // =======================
+    // ページ切替
+    // =======================
+    function switchPage(name, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      const page = $('page-' + name);
+      if (page) {
+        page.classList.add('active');
+        document.getElementById('content').scrollTop = 0;
+      }
+
+      // ナビボタンのアクティブ化
+      if (el) {
+        el.classList.add('active');
+      } else {
+        const navBtn = document.querySelector(`.nav-item[onclick*="${name}"]`);
+        if (navBtn) navBtn.classList.add('active');
+      }
+    }
+
+    // =======================
+    // 初期化 (DOMContentLoaded)
+    // =======================
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+    });
+
+    // =======================
+    // データ取得
+    // =======================
+    function loadData() {
+      google.script.run
+        .withSuccessHandler(renderData)
+        .withFailureHandler(err => {
+          console.error("Data Load Error:", err);
+          hideLoading();
+          showToast("データ取得失敗: " + err.message, "error");
+        })
+        .getMapData();
+
+      google.script.run
+        .withSuccessHandler(name => {
+          safeText('branch-label', name);
+        })
+        .getBranchName();
+
+      google.script.run
+        .withSuccessHandler(list => {
+          roster = list || [];
+        })
+        .getRoster();
+    }
+
+    // =======================
+    // 描画メイン
+    // =======================
+    function renderData(data) {
+      hideLoading();
+      if (!data) return;
+
+      const summary = data.summary || [];
+      const stats = data.stats || { done: 0, total: 0 };
+      const pct = stats.total ? Math.round(stats.done / stats.total * 100) : 0;
+
+      // ヘッダー・KPI更新
+      safeText('header-progress', pct + "%");
+      safeText('progress-pct-main', pct + "%");
+      safeText('area-done-total', stats.done.toLocaleString());
+      safeText('area-total-count', stats.total.toLocaleString());
+      safeText('area-total', summary.length); // 正しいエリア数
+      safeText('kpi-sheets', summary.length);
+
+      // プログレスバー更新
+      const bar = $('progress-bar-fill');
+      if (bar) bar.style.width = pct + "%";
+
+      // エリア一覧描画
+      const areaList = $('area-list');
+      if (areaList) {
+        const summary = data.summary || [];
+        if (summary.length > 0) {
+          areaList.innerHTML = summary.map((s) => {
+            const name = s.name;
+            const r = s.total > 0 ? s.done / s.total : 0;
+            const pct = Math.round(r * 100);
+            const color = r >= 1.0 ? 'var(--green)' : r >= 0.3 ? '#f4a261' : 'var(--red)';
+            return `
+            <div class="area-item" onclick="openArea('${name}')">
+              <div class="area-top">
+                <div class="area-dot" style="color:${color}; background:${color}"></div>
+                <div class="area-name">${name}</div>
+                <div class="area-meta">${s.done} / ${s.total} 軒</div>
+                <div class="area-chevron">›</div>
+              </div>
+              <div class="area-progress-bg">
+                <div class="area-progress-fill" style="width:${pct}%; background:${color}"></div>
+              </div>
+            </div>`;
+          }).join('');
+        } else {
+          areaList.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);">エリアデータがありません</div>';
+        }
+      }
+
+      // ランキング描画
+      renderRanking(data.ranking);
+    }
+
+    // =======================
+    // ランキング描画
+    // =======================
+    function renderRanking(ranking) {
+      const list = $('ranking-list');
+      if (!list || !ranking) return;
+
+      list.innerHTML = ranking.map((r, i) => {
+        const medal = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        return `
+        <div class="rank-item">
+          <div class="rank-num ${medal}">${i + 1}</div>
+          <div class="rank-name">${r.name}</div>
+          <div class="rank-count">${r.count.toLocaleString()}<span>枚</span></div>
+        </div>`;
+      }).join('');
+    }
+
+    // =======================
+    // エリア詳細表示（オンデマンド取得方式）
+    // =======================
+    function openArea(name) {
+      const container = $('detail-list');
+      if (!container) return;
+
+      safeText('detail-title', name);
+      container.innerHTML = '<div style="padding:40px;text-align:center;">読み込み中...</div>';
+      switchPage('area-detail');
+
+      google.script.run
+        .withSuccessHandler(list => {
+          if (!list || list.length === 0) {
+            container.innerHTML = '<div style="padding:40px;text-align:center;">住所データがありません</div>';
+            return;
+          }
+
+          container.innerHTML = list.map((p) => {
+            const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.address.replace(/\n/g, ' '));
+            return `
+            <div class="card detail-card">
+              <div class="detail-row">
+                <div class="detail-address-box">
+                  <div class="detail-address">${p.address.replace(/\n/g, '<br>')}</div>
+                  ${p.memo ? `<div class="detail-memo">📝 ${p.memo}</div>` : ''}
+                </div>
+                <a href="${mapUrl}" target="_blank" class="map-btn">📍 地図</a>
+              </div>
+              
+              <div class="detail-controls">
+                <div class="detail-check">
+                  <input type="checkbox" id="check-${p.id}" ${p.isDone ? "checked" : ""} 
+                         onchange="updateRecord('${name}', ${p.id}, '${p.id}')">
+                  <label for="check-${p.id}">配布完了</label>
+                </div>
+                <div class="detail-inputs">
+                  <select id="count-${p.id}" onchange="updateRecord('${name}', ${p.id}, '${p.id}')">
+                    <option value="">枚数</option>
+                    ${[10, 20, 30, 50, 100, 150, 200, 250, 300, 400, 500].map(v => `<option value="${v}" ${p.count == v ? "selected" : ""}>${v}枚</option>`).join('')}
+                  </select>
+                  <select id="staff-${p.id}" onchange="updateRecord('${name}', ${p.id}, '${p.id}')">
+                    <option value="">担当者</option>
+                    ${roster.map(n => `<option value="${n}" ${p.staff == n ? "selected" : ""}>${n}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+            </div>`;
+          }).join('');
+        })
+        .withFailureHandler(err => {
+          showToast("詳細取得失敗: " + err.message, "error");
+        })
+        .getAreaDetails(name);
+    }
+
+    // =======================
+    // データ更新処理
+    // =======================
+    function updateRecord(area, index, idPrefix) {
+      const isDone = $(`check-${idPrefix}`).checked;
+      const count = $(`count-${idPrefix}`).value;
+      const staff = $(`staff-${idPrefix}`).value;
+
+      showToast("更新中...", "info");
+
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.success) {
+            showToast("更新しました");
+            // データ再読み込み
+            loadData();
+          }
+        })
+        .withFailureHandler(err => {
+          showToast("通信エラー: " + err.message, "error");
+        })
+        .submitDistribution(area, index, staff, count, isDone);
+    }
+
+    // =======================
+    // UI補助関数
+    // =======================
+    function showToast(msg, type = "success") {
+      const toast = $('toast');
+      if (!toast) return;
+      toast.textContent = msg;
+
+      let bg = "var(--navy)";
+      if (type === "error") bg = "var(--red)";
+      if (type === "info") bg = "var(--blue)";
+      if (type === "warning") bg = "#f4a261";
+
+      toast.style.background = bg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    function hideLoading() {
+      const el = $('loading');
+      if (el) {
+        el.style.opacity = '0';
+        setTimeout(() => el.style.display = 'none', 400);
+      }
+    }
+  </script>
+</body>
+
+</html>

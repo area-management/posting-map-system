@@ -1,0 +1,23 @@
+<style>
+  header {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-size: 18px; font-weight: 900; color: var(--navy); }
+  .logo span { color: var(--blue); }
+  .sync-status { font-size: 10px; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: 4px; }
+  .sync-dot { width: 6px; height: 6px; background: currentColor; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+</style>
+
+<header>
+  <div class="logo">POSTING<span>MAP</span></div>
+  <div class="sync-status">
+    <div class="sync-dot"></div>
+    LIVE SYNC
+  </div>
+</header>

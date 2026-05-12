@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ポスティングアプリ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Base ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --navy: #0a2540;
+      --blue: #0077b6;
+      --cyan: #00b4d8;
+      --red: #e63946;
+      --green: #2dc653;
+      --bg: #f0f4f8;
+      --card: #ffffff;
+      --text: #1a2533;
+      --muted: #6b7a8d;
+      --border: #e2e8f0;
+      --header-h: 60px;
+      --nav-h: 64px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 20px;
+    }
+
+    /* ── Pages ── */
+    .page {
+      display: none;
+      padding: 16px;
+      min-height: 100%;
+    }
+
+    .page.active {
+      display: block;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── Loading ── */
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--navy);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #loading span {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 50px;
+      background: var(--navy);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      z-index: 10000;
+      display: none;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        top: -50px;
+        opacity: 0;
+      }
+
+      to {
+        top: 20px;
+        opacity: 1;
+      }
+    }
+
+    /* ── Shared Elements ── */
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      margin: 24px 4px 12px;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <span>読み込み中...</span>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="app">
+    <?!= include('header'); ?>
+
+    <main id="content">
+      <?!= include('guide'); ?>
+      <?!= include('area'); ?>
+      <?!= include('area-detail'); ?>
+      <?!= include('progress'); ?>
+      <?!= include('settings'); ?>
+      <?!= include('admin'); ?>
+    </main>
+
+    <?!= include('nav'); ?>
+  </div>
+
+  <script>
+    /**
+     * 最強安定UI制御ロジック
+     */
+    let allPoints = [];
+    let areaSummary = {};
+    let roster = [];
+    let lastAdminStats = { done: 0, totalDistributed: 0, pct: 0 };
+    
+    const CACHE_KEY = 'PMS_MAP_DATA_CACHE';
+
+    // =======================
+    // DOM安全操作関数
+    // =======================
+    function $(id) { return document.getElementById(id); }
+
+    function safeText(id, val) {
+      const el = $(id);
+      if (el) el.textContent = val;
+    }
+
+    function safeHTML(id, val) {
+      const el = $(id);
+      if (el) el.innerHTML = val;
+    }
+
+    // =======================
+    // ページ切替
+    // =======================
+    function switchPage(name, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      const page = $('page-' + name);
+      if (page) {
+        page.classList.add('active');
+        document.getElementById('content').scrollTop = 0;
+      }
+
+      // ナビボタンのアクティブ化
+      if (el) {
+        el.classList.add('active');
+      } else {
+        const navBtn = document.querySelector(`.nav-item[onclick*="${name}"]`);
+        if (navBtn) navBtn.classList.add('active');
+      }
+    }
+
+    // =======================
+    // 初期化 (DOMContentLoaded)
+    // =======================
+    let isAdminMode = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // GAS環境でのURLパラメータ取得 (iframe内でも確実に取得するため)
+      google.script.url.getLocation(function(location) {
+        isAdminMode = (location.parameter.mode === 'admin');
+        
+        if (isAdminMode) {
+          document.body.classList.add('admin-mode');
+          const nav = document.querySelector('nav');
+          if (nav) nav.style.display = 'none';
+          const header = document.querySelector('header:not(.admin-header)');
+          if (header) header.style.display = 'none';
+          switchPage('admin');
+        }
+
+        // --- キャッシュ復元ロジック ---
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          try {
+            const data = JSON.parse(cached);
+            // キャッシュから初期ステートを復元
+            if (data.stats) {
+              const DENOMINATOR = 651;
+              const p = Math.min(100, Math.round((data.stats.done / DENOMINATOR) * 100 * 10) / 10);
+              let totalDist = 0;
+              if (data.ranking) data.ranking.forEach(r => totalDist += r.count);
+              lastAdminStats = { done: data.stats.done, totalDistributed: totalDist, pct: p };
+            }
+            // キャッシュデータを描画（アニメーションなしの静的描画として実行）
+            renderData(data, true);
+          } catch(e) {
+            console.error("Cache restore failed", e);
+          }
+        }
+
+        // モード判定とキャッシュ描画が完了してから、バックグラウンドで最新データを取得
+        loadData(true);
+      });
+    });
+
+    // =======================
+    // データ取得
+    // =======================
+    function loadData(isInitial = false) {
+      if (isInitial) showLoading();
+      const btn = $('admin-refresh-btn');
+      if (btn) btn.classList.add('spinning');
+
+      google.script.run
+        .withSuccessHandler(renderData)
+        .withFailureHandler(err => {
+          console.error("Data Load Error:", err);
+          hideLoading();
+          const btn = $('admin-refresh-btn');
+          if (btn) btn.classList.remove('spinning');
+          showToast("データ取得失敗: " + err.message, "error");
+        })
+        .getMapData();
+
+      google.script.run
+        .withSuccessHandler(name => {
+          safeText('branch-label', name);
+        })
+        .getBranchName();
+
+      google.script.run
+        .withSuccessHandler(list => {
+          roster = list || [];
+        })
+        .getRoster();
+    }
+
+    // =======================
+    // 描画メイン
+    // =======================
+    function renderData(data, isFromCache = false) {
+      if (!isFromCache) hideLoading();
+      
+      const btn = $('admin-refresh-btn');
+      if (btn && !isFromCache) btn.classList.remove('spinning');
+
+      if (!data) return;
+
+      // 最新データをキャッシュに保存
+      if (!isFromCache) {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      }
+
+      const summary = data.summary || [];
+      const stats = data.stats || { done: 0, total: 0 };
+      const pct = stats.total ? Math.round(stats.done / stats.total * 100) : 0;
+
+      // 管理者モード用の特殊描画 (651ユニットロジックを優先)
+      if (isAdminMode) {
+        renderAdminDashboard(data);
+        return;
+      }
+
+      // ヘッダー・KPI更新（通常モード）
+      safeText('header-progress', pct + "%");
+      safeText('progress-pct-main', pct + "%");
+      safeText('area-done-total', stats.done.toLocaleString());
+      safeText('area-total-count', stats.total.toLocaleString());
+      safeText('area-total', summary.length); // 正しいエリア数
+      safeText('kpi-sheets', summary.length);
+
+      // プログレスバー更新
+      const bar = $('progress-bar-fill');
+      if (bar) bar.style.width = pct + "%";
+
+      // エリア一覧描画
+      const areaList = $('area-list');
+      if (areaList) {
+        const summary = data.summary || [];
+        if (summary.length > 0) {
+          areaList.innerHTML = summary.map((s) => {
+            const name = s.name;
+            const r = s.total > 0 ? s.done / s.total : 0;
+            const pct = Math.round(r * 100);
+            const color = r >= 1.0 ? 'var(--green)' : r >= 0.3 ? '#f4a261' : 'var(--red)';
+            return `
+            <div class="area-item" onclick="openArea('${name}')">
+              <div class="area-top">
+                <div class="area-dot" style="color:${color}; background:${color}"></div>
+                <div class="area-name">${name}</div>
+                <div class="area-meta">${s.done} / ${s.total} 軒</div>
+                <div class="area-chevron">›</div>
+              </div>
+              <div class="area-progress-bg">
+                <div class="area-progress-fill" style="width:${pct}%; background:${color}"></div>
+              </div>
+            </div>`;
+          }).join('');
+        } else {
+          areaList.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);">エリアデータがありません</div>';
+        }
+      }
+
+      // ランキング描画
+      renderRanking(data.ranking);
+    }
+
+    // =======================
+    // 管理者ダッシュボード描画
+    // =======================
+    function renderAdminDashboard(data) {
+      const stats = data.stats || { done: 0, total: 0 };
+      const ranking = data.ranking || [];
+      const summary = data.summary || [];
+
+      // 母数 651 を基準とした進捗率
+      const DENOMINATOR = 651;
+      const progressPct = Math.min(100, Math.round((stats.done / DENOMINATOR) * 100 * 10) / 10);
+      
+      // 総配布枚数
+      let totalDistributed = 0;
+      ranking.forEach(r => totalDistributed += r.count);
+
+      // 変化の判定
+      const pctChanged = progressPct !== lastAdminStats.pct;
+      const doneChanged = stats.done !== lastAdminStats.done;
+      const totalChanged = totalDistributed !== lastAdminStats.totalDistributed;
+
+      // UI更新
+      if (pctChanged) {
+        animateValue('admin-progress-pct', lastAdminStats.pct, progressPct, 1000, '%');
+        animateValue('admin-progress-msg-pct', lastAdminStats.pct, progressPct, 1000, '%');
+      }
+      
+      const circle = $('admin-progress-ring-fill');
+      if (circle) {
+        const radius = circle.r.baseVal.value || 70;
+        const circumference = radius * 2 * Math.PI;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        const offset = circumference - (progressPct / 100 * circumference);
+        circle.style.strokeDashoffset = offset;
+      }
+
+      if (doneChanged) animateValue('admin-done-count', lastAdminStats.done, stats.done, 1000);
+      if (totalChanged) animateValue('admin-today-count', lastAdminStats.totalDistributed, totalDistributed, 1000);
+
+      lastAdminStats = { done: stats.done, totalDistributed: totalDistributed, pct: progressPct };
+
+      // 【追加】エリア別完了数リスト（ボトムシート内）の描画
+      const adminAreaList = $('admin-area-list');
+      if (adminAreaList) {
+        if (summary.length > 0) {
+          adminAreaList.innerHTML = summary.map(s => {
+            const p = s.total > 0 ? Math.round(s.done / s.total * 100) : 0;
+            return `
+              <div class="admin-area-item">
+                <div class="admin-area-info">
+                  <span class="admin-area-name">${s.name}</span>
+                  <span class="admin-area-stats"><b>${s.done}</b> / ${s.total} 軒 (${p}%)</span>
+                </div>
+                <div class="admin-area-bar-bg">
+                  <div class="admin-area-bar-fill" style="width: ${p}%"></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          adminAreaList.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">エリアデータがありません</div>';
+        }
+      }
+
+      // リアルタイム速報
+      const activityList = $('admin-activity-list');
+      if (activityList) {
+        const logs = data.logs || [
+          { time: '10:35', area: '名張市 つつじが丘', staff: '山田 太郎' },
+          { time: '10:12', area: '四日市市 桜町', staff: '佐藤 花子' },
+          { time: '09:45', area: '鈴鹿市 白子', staff: '田中 一郎' }
+        ];
+        activityList.innerHTML = logs.map(log => `
+          <li class="activity-item">
+            <span class="activity-time">${log.time}</span>
+            <span class="activity-badge">完了</span>
+            <span class="activity-text">${log.area}</span>
+            <span class="activity-staff">${log.staff}</span>
+          </li>
+        `).join('');
+      }
+
+      // ランキング
+      const rankList = $('admin-ranking-list');
+      if (rankList) {
+        const displayRanking = ranking && ranking.length > 0 ? ranking : [
+          { name: '田中 太郎', count: 152 },
+          { name: '鈴木 一郎', count: 128 },
+          { name: '佐藤 花子', count: 98 }
+        ];
+        const maxCount = Math.max(...displayRanking.map(r => r.count));
+        rankList.innerHTML = displayRanking.slice(0, 5).map((r, i) => {
+          const icons = ['🥇', '🥈', '🥉', '👤', '👤'];
+          const barPct = maxCount > 0 ? (r.count / maxCount) * 100 : 0;
+          return `
+            <div class="admin-rank-item">
+              <div class="admin-rank-icon">${icons[i]}</div>
+              <div class="admin-rank-info">
+                <div class="admin-rank-top">
+                  <span class="admin-rank-name">${r.name}</span>
+                  <span class="admin-rank-val">${r.count.toLocaleString()}<span>枚</span></span>
+                </div>
+                <div class="admin-rank-bar-bg">
+                  <div class="admin-rank-bar-fill" style="width: ${barPct}%"></div>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+      }
+      safeText('admin-last-update', '今');
+    }
+
+    // =======================
+    // 管理者UI制御 (追加)
+    // =======================
+    function toggleAdminMenu() {
+      const drawer = $('admin-menu-drawer');
+      const overlay = $('admin-menu-overlay');
+      if (drawer.classList.contains('open')) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('show');
+        setTimeout(() => overlay.style.display = 'none', 300);
+      } else {
+        overlay.style.display = 'block';
+        setTimeout(() => {
+          drawer.classList.add('open');
+          overlay.classList.add('show');
+        }, 10);
+      }
+    }
+
+    function toggleAreaSheet() {
+      const sheet = $('admin-area-sheet');
+      const overlay = $('admin-menu-overlay');
+      if (sheet.classList.contains('open')) {
+        sheet.classList.remove('open');
+        overlay.classList.remove('show');
+        setTimeout(() => overlay.style.display = 'none', 300);
+      } else {
+        overlay.style.display = 'block';
+        setTimeout(() => {
+          sheet.classList.add('open');
+          overlay.classList.add('show');
+        }, 10);
+      }
+    }
+
+    function closeAllAdminUI() {
+      const drawer = $('admin-menu-drawer');
+      const sheet = $('admin-area-sheet');
+      const overlay = $('admin-menu-overlay');
+      if (drawer) drawer.classList.remove('open');
+      if (sheet) sheet.classList.remove('open');
+      if (overlay) {
+        overlay.classList.remove('show');
+        setTimeout(() => overlay.style.display = 'none', 300);
+      }
+    }
+
+    function runAdminTask(funcName, confirmMsg) {
+      if (!confirm(confirmMsg)) return;
+      showToast("実行中...", "info");
+      toggleAdminMenu(); // メニューを閉じる
+      
+      google.script.run
+        .withSuccessHandler(() => {
+          showToast("実行完了しました");
+          loadData(); // データを再取得
+        })
+        .withFailureHandler(err => {
+          showToast("エラー: " + err.message, "error");
+        })[funcName]();
+    }
+
+    function showLoading() {
+      const el = $('loading');
+      if (el) {
+        el.style.display = 'flex';
+        el.style.opacity = '1';
+      }
+    }
+
+    // =======================
+    // ランキング描画 (通常モード)
+    // =======================
+    function renderRanking(ranking) {
+      const list = $('ranking-list');
+      if (!list || !ranking) return;
+
+      list.innerHTML = ranking.map((r, i) => {
+        const medal = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        return `
+        <div class="rank-item">
+          <div class="rank-num ${medal}">${i + 1}</div>
+          <div class="rank-name">${r.name}</div>
+          <div class="rank-count">${r.count.toLocaleString()}<span>枚</span></div>
+        </div>`;
+      }).join('');
+    }
+
+    // =======================
+    // エリア詳細表示（オンデマンド取得方式）
+    // =======================
+    function openArea(name) {
+      const container = $('detail-list');
+      if (!container) return;
+
+      safeText('detail-title', name);
+      container.innerHTML = '<div style="padding:40px;text-align:center;">読み込み中...</div>';
+      switchPage('area-detail');
+
+      google.script.run
+        .withSuccessHandler(list => {
+          if (!list || list.length === 0) {
+            container.innerHTML = '<div style="padding:40px;text-align:center;">住所データがありません</div>';
+            return;
+          }
+
+          container.innerHTML = list.map((p) => {
+            const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.address.replace(/\n/g, ' '));
+            return `
+            <div class="card detail-card">
+              <div class="detail-row">
+                <div class="detail-address-box">
+                  <div class="detail-address">${p.address.replace(/\n/g, '<br>')}</div>
+                  ${p.memo ? `<div class="detail-memo">📝 ${p.memo}</div>` : ''}
+                </div>
+                <a href="${mapUrl}" target="_blank" class="map-btn">📍 地図</a>
+              </div>
+
+              <div class="detail-controls">
+                <div class="detail-check">
+                  <input type="checkbox" id="check-${p.id}" ${p.isDone ? "checked" : ""}
+                         onchange="updateRecord('${name}', ${p.id}, '${p.id}')">
+                  <label for="check-${p.id}">配布完了</label>
+                </div>
+                <div class="detail-inputs">
+                  <select id="count-${p.id}" onchange="updateRecord('${name}', ${p.id}, '${p.id}')">
+                    <option value="">枚数</option>
+                    ${[10, 20, 30, 50, 100, 150, 200, 250, 300, 400, 500].map(v => `<option value="${v}" ${p.count == v ? "selected" : ""}>${v}枚</option>`).join('')}
+                  </select>
+                  <select id="staff-${p.id}" onchange="updateRecord('${name}', ${p.id}, '${p.id}')">
+                    <option value="">担当者</option>
+                    ${roster.map(n => `<option value="${n}" ${p.staff == n ? "selected" : ""}>${n}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+            </div>`;
+          }).join('');
+        })
+        .withFailureHandler(err => {
+          showToast("詳細取得失敗: " + err.message, "error");
+        })
+        .getAreaDetails(name);
+    }
+
+    // =======================
+    // データ更新処理
+    // =======================
+    function updateRecord(area, index, idPrefix) {
+      const isDone = $(`check-${idPrefix}`).checked;
+      const count = $(`count-${idPrefix}`).value;
+      const staff = $(`staff-${idPrefix}`).value;
+
+      showToast("更新中...", "info");
+
+      google.script.run
+        .withSuccessHandler(res => {
+          if (res.success) {
+            showToast("更新しました");
+            // データ再読み込み
+            loadData();
+          }
+        })
+        .withFailureHandler(err => {
+          showToast("通信エラー: " + err.message, "error");
+        })
+        .submitDistribution(area, index, staff, count, isDone);
+    }
+
+    // =======================
+    // UI補助関数
+    // =======================
+    function showToast(msg, type = "success") {
+      const toast = $('toast');
+      if (!toast) return;
+      toast.textContent = msg;
+
+      let bg = "var(--navy)";
+      if (type === "error") bg = "var(--red)";
+      if (type === "info") bg = "var(--blue)";
+      if (type === "warning") bg = "#f4a261";
+
+      toast.style.background = bg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    function hideLoading() {
+      const el = $('loading');
+      if (el) {
+        el.style.opacity = '0';
+        setTimeout(() => el.style.display = 'none', 400);
+      }
+    }
+
+    // =======================
+    // アニメーション補助関数
+    // =======================
+    function animateValue(id, start, end, duration, suffix = "") {
+      const obj = $(id);
+      if (!obj) return;
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const val = progress * (end - start) + start;
+        
+        if (suffix === "%") {
+          obj.textContent = val.toFixed(1) + suffix;
+        } else {
+          obj.textContent = Math.floor(val).toLocaleString() + suffix;
+        }
+        
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        } else {
+          // 最終値の補正
+          obj.textContent = (suffix === "%" ? end.toFixed(1) : end.toLocaleString()) + suffix;
+        }
+      };
+      window.requestAnimationFrame(step);
+    }
+
+    function flashElement(id) {
+      const el = $(id);
+      if (el) {
+        el.classList.add('glow-pulse');
+        setTimeout(() => el.classList.remove('glow-pulse'), 800);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# GAS / clasp
+.clasp.json
+.clasprc.json
+appsscript.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+build/
+dist/
+
+# Project Data
+*.csv
+*.zip
+*.pdf
+scripts/*.bak
+
+# IDE/Local settings
+.vscode/
+.idea/
+# .claude/  # 通常は含めるが、プロジェクト設定として共有する場合はコメントアウト

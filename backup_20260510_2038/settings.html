@@ -1,0 +1,99 @@
+<style>
+  .registration-box {
+    background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border);
+  }
+  .input-group { margin-bottom: 16px; }
+  .input-group label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+  .input-group input {
+    width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--bg); font-size: 16px; font-weight: 700; color: var(--navy);
+    outline: none; transition: border-color 0.2s;
+  }
+  .input-group input:focus { border-color: var(--blue); }
+  
+  .reg-btn {
+    width: 100%; padding: 16px; border-radius: 12px; border: none;
+    background: var(--blue); color: #fff; font-size: 16px; font-weight: 900;
+    cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0, 119, 182, 0.2);
+  }
+  .reg-btn:active { transform: scale(0.97); opacity: 0.9; }
+  
+  .status-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 800; margin-bottom: 12px;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .status-badge.registered { background: #e8f5e9; color: var(--green); }
+  .status-badge.unregistered { background: #fff3e0; color: #ef6c00; }
+
+  .admin-btn {
+    width: 100%; padding: 16px; border-radius: 12px; border: none;
+    background: var(--navy); color: #fff; font-size: 14px; font-weight: 700;
+    margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .admin-btn.danger { background: var(--red); }
+  .admin-btn:active { opacity: 0.8; transform: scale(0.98); }
+
+  .info-box {
+    background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 24px;
+    border-left: 4px solid var(--blue);
+  }
+  .info-box p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+</style>
+
+<div id="page-settings" class="page">
+  <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 20px;">設定・配布員登録</h2>
+
+  <!-- 配布員登録セクション -->
+  <div class="registration-box">
+    <div id="reg-status-badge" class="status-badge unregistered">未登録</div>
+    <div id="reg-info" style="margin-bottom: 20px;">
+      <p id="reg-current-name" style="font-size: 18px; font-weight: 900; color: var(--navy);">お名前を登録してください</p>
+      <p style="font-size: 12px; color: var(--muted); margin-top: 6px;">一度登録すると、報告が自動的にあなたの名前で行われます。</p>
+    </div>
+
+    <div id="reg-form">
+      <div class="input-group">
+        <label>苗字（全角）</label>
+        <input type="text" id="reg-last-name" placeholder="例：鈴木">
+      </div>
+      <div class="input-group">
+        <label>名前（全角）</label>
+        <input type="text" id="reg-first-name" placeholder="例：一郎">
+      </div>
+      <button class="reg-btn" onclick="performRegistration()">登録する</button>
+    </div>
+    
+    <button id="re-reg-btn" class="admin-btn" style="display:none; margin-top:10px; background:#f0f4f8; color:var(--muted); box-shadow:none;" onclick="toggleRegForm()">
+      <span>登録名を変更する</span>
+    </button>
+  </div>
+
+  <div class="info-box">
+    <h4 style="font-size: 14px; margin-bottom: 8px;">アプリ情報</h4>
+    <p id="app-version-info">
+      バージョン: 2.6.0 (Staff ID Integrated)<br>
+      同期状態: リアルタイム同期中
+    </p>
+    <div id="admin-secret-link" style="display:none; margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+      <a href="?mode=admin" target="_top" style="color:var(--blue); font-size:13px; font-weight:bold; text-decoration:none;">⚙️ 管理者モードに切り替える</a>
+    </div>
+  </div>
+
+  <script>
+    let adminTapCount = 0;
+    const versionEl = document.getElementById('app-version-info');
+    if (versionEl) {
+      versionEl.onclick = function() {
+        adminTapCount++;
+        if (adminTapCount >= 5) {
+          const link = document.getElementById('admin-secret-link');
+          if (link) link.style.display = 'block';
+          showToast("管理者メニューを解放しました");
+          adminTapCount = 0;
+        }
+      };
+    }
+  </script>
+</div>
