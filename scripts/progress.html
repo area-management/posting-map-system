@@ -1,69 +1,30 @@
-<div id="page-progress" class="page animate-in fade-in slide-in-from-bottom-4 duration-500">
-  
-  <div class="mb-8">
-    <h2 class="text-2xl font-black text-navy tracking-tight leading-none">配布進捗</h2>
-    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Live Performance Tracking</p>
+<!-- Next-Gen Stats Dashboard Component -->
+<div class="animate-fade-in">
+  <div class="grid grid-cols-2 gap-8 p-8">
+    <div class="bg-navy dark:bg-blue-900 rounded-[3rem] p-10 shadow-neu-light dark:shadow-neu-dark text-white border border-white/10 relative overflow-hidden group">
+      <div class="relative z-10">
+        <div id="kpi-pct" class="text-5xl font-black tracking-tighter leading-none mb-4 text-blue-300">0%</div>
+        <div class="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Mission Success</div>
+      </div>
+      <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-blue-400 rounded-full blur-[60px] opacity-20 group-hover:scale-125 transition-transform duration-1000"></div>
+    </div>
+    
+    <div class="bg-white/60 dark:bg-white/5 rounded-[3rem] p-10 shadow-neu-light dark:shadow-neu-dark border border-white/10 flex flex-col justify-center">
+      <div id="kpi-done" class="text-5xl font-black text-navy dark:text-blue-400 tracking-tighter leading-none mb-4">0</div>
+      <div class="text-[10px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-[0.2em]">Sectors Secured</div>
+    </div>
   </div>
-
-  <!-- Hero Progress Card -->
-  <div class="bg-navy rounded-[2.5rem] p-8 text-white shadow-2xl shadow-navy/20 relative overflow-hidden ring-1 ring-white/10 mb-8">
-    <div class="flex justify-between items-end mb-6 relative z-10">
-      <div id="progress-pct-main" class="text-5xl font-black tracking-tighter leading-none">0%</div>
-      <div class="text-[10px] font-black uppercase tracking-widest opacity-60">
-        <span id="area-done">0</span> / <span id="area-total">0</span> <span class="ml-1">Units</span>
+  
+  <div class="px-8 pb-48">
+    <div class="bg-white/60 dark:bg-white/5 rounded-[3.5rem] p-12 shadow-neu-light dark:shadow-neu-dark border border-white/10">
+      <div class="flex items-center justify-between mb-12">
+        <h3 class="text-sm font-black text-navy dark:text-blue-400 tracking-[0.3em] uppercase">🏆 Hall of Fame</h3>
+        <span class="text-[10px] font-black text-gray-300 dark:text-gray-700 uppercase tracking-widest">Global Ranking</span>
+      </div>
+      
+      <div id="ranking-list" class="space-y-10">
+        <!-- Ranking items dynamically injected with Hybrid UI style -->
       </div>
     </div>
-    <div class="h-2 bg-white/10 rounded-full overflow-hidden relative z-10 mb-2">
-      <div id="progress-bar-fill" class="h-full bg-blue-400 rounded-full transition-all duration-1000" style="width: 0%"></div>
-    </div>
-    <p class="text-[9px] font-bold text-white/40 uppercase tracking-[0.2em] relative z-10">Strategic Coverage Area</p>
-    
-    <!-- Decorative Glow -->
-    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-500 rounded-full blur-[80px] opacity-30"></div>
-  </div>
-
-  <!-- KPI Grid -->
-  <div class="grid grid-cols-2 gap-4 mb-10">
-    <div class="bg-white rounded-[2rem] p-6 shadow-sm ring-1 ring-black/[0.01]">
-      <div id="kpi-sheets" class="text-3xl font-black text-navy tracking-tighter leading-none mb-2">0</div>
-      <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Global Sectors</div>
-    </div>
-    <div class="bg-white rounded-[2rem] p-6 shadow-sm ring-1 ring-black/[0.01]">
-      <div id="kpi-staff" class="text-3xl font-black text-navy tracking-tighter leading-none mb-2">0</div>
-      <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Staff</div>
-    </div>
-  </div>
-
-  <!-- Ranking Section -->
-  <div class="bg-white rounded-[2.5rem] p-8 shadow-sm ring-1 ring-black/[0.01]">
-    <div class="flex justify-between items-center mb-8">
-      <h3 class="text-sm font-black text-navy tracking-tight uppercase">🏆 Staff Ranking</h3>
-      <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Top Performers</span>
-    </div>
-    
-    <div id="ranking-list" class="space-y-6">
-      <!-- Dynamic ranking will be injected here -->
-      <div class="py-10 text-center font-bold text-gray-300 uppercase text-[9px] tracking-widest">Syncing Performance Data...</div>
-    </div>
-  </div>
-
-  <div class="py-16 text-center opacity-20 select-none">
-    <p class="text-[9px] font-black text-navy uppercase tracking-[0.4em]">Strategic Monitoring</p>
   </div>
 </div>
-
-<style>
-  /* 
-     JavaScript 側で生成されるランキング要素用の
-     Tailwind クラス補完
-  */
-  .rank-row-premium {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-  }
-  .rank-badge-gold   { background-color: #fef3c7; color: #92400e; }
-  .rank-badge-silver { background-color: #f1f5f9; color: #475569; }
-  .rank-badge-bronze { background-color: #ffedd5; color: #9a3412; }
-  .rank-badge-none   { background-color: #f9fafb; color: #9ca3af; }
-</style>

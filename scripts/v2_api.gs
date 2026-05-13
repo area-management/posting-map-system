@@ -332,3 +332,16 @@ function aggregateTotalVolumes() {
     ss.toast(`集計完了: ${progressPercent.toFixed(1)}%`, "📊 UPDATE COMPLETE");
   }
 }
+
+/**
+ * 管理者権限チェック
+ */
+function isNotAdmin() {
+  const user = Session.getActiveUser().getEmail();
+  const owner = SpreadsheetApp.getActiveSpreadsheet().getOwner().getEmail();
+  if (user !== owner) {
+    SpreadsheetApp.getUi().alert("❌ 管理者専用です。");
+    return true;
+  }
+  return false;
+}

@@ -1,48 +1,28 @@
-<div id="page-area" class="page animate-in fade-in slide-in-from-bottom-4 duration-500">
-  
-  <!-- Area Header -->
-  <div class="flex items-center justify-between mb-8">
-    <div>
-      <h2 class="text-2xl font-black text-navy tracking-tight leading-none">エリア一覧</h2>
-      <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Operational Sectors</p>
+<!-- Next-Gen Area List Component -->
+<div class="animate-fade-in">
+  <div class="bg-white/60 dark:bg-white/5 m-8 rounded-[2.5rem] p-10 shadow-neu-light dark:shadow-neu-dark border border-white/10">
+    <div class="flex justify-between items-center mb-8">
+      <span class="text-[10px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-[0.2em]">Global Achievement</span>
+      <strong id="area-progress-pct" class="text-3xl font-black text-navy dark:text-blue-400 tracking-tighter">0%</strong>
     </div>
-    <div class="bg-white px-4 py-2 rounded-2xl shadow-sm ring-1 ring-black/[0.02]">
-      <div class="text-[9px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">Total Sectors</div>
-      <div id="area-total" class="text-lg font-black text-navy leading-none tracking-tighter">0</div>
+    <div class="h-3 bg-apple-light dark:bg-apple-dark rounded-full shadow-neu-inset-light dark:shadow-neu-inset-dark overflow-hidden mb-6">
+      <div id="area-bar" class="h-full bg-navy dark:bg-blue-600 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(26,35,126,0.3)]" style="width:0%"></div>
     </div>
-  </div>
-
-  <!-- Area List Container -->
-  <div id="area-list" class="space-y-4 pb-24">
-    <div class="py-20 text-center">
-      <div class="w-10 h-10 border-4 border-gray-100 border-t-navy rounded-full animate-spin-custom mx-auto mb-6"></div>
-      <p class="text-xs font-black text-gray-300 uppercase tracking-widest">Loading Strategic Data...</p>
+    <div class="text-[10px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-widest flex justify-between">
+      <span>Operational Coverage</span>
+      <span><span id="area-done" class="text-navy dark:text-blue-400">0</span> / <span id="area-total">0</span> Units</span>
     </div>
   </div>
 
+  <div class="px-8 mb-10">
+    <div class="relative group">
+      <input type="text" id="area-search" placeholder="エリアを検索..." oninput="filterAreas()" 
+             class="w-full bg-apple-light/50 dark:bg-black/20 border-none rounded-[2rem] p-6 pl-16 text-lg font-bold shadow-neu-inset-light dark:shadow-neu-inset-dark outline-none focus:ring-4 ring-navy/5 dark:ring-blue-500/10 transition-all placeholder:text-gray-300">
+      <span class="absolute left-7 top-1/2 -translate-y-1/2 text-2xl opacity-30 group-focus-within:opacity-100 transition-opacity">🔍</span>
+    </div>
+  </div>
+
+  <div class="px-8 pb-48 space-y-6" id="area-list">
+    <!-- Area items will be dynamically injected here with the new Hybrid UI style -->
+  </div>
 </div>
-
-<style>
-  /* 
-     JavaScript 側で生成される各アイテム (.area-item) 用の
-     Tailwind クラスを補足（または JS側で直接クラス指定）
-  */
-  .area-card-premium {
-    background: white;
-    border-radius: 1.75rem; /* 28px */
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    border: 1px solid rgba(0,0,0,0.02);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .area-card-premium:active {
-    transform: scale(0.97);
-    background-color: #f9fafb;
-    box-shadow: 0 0 0 rgba(0,0,0,0);
-  }
-</style>

@@ -4,23 +4,22 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>STRATEGY MAP PRO</title>
+  <title>STRATEGY MAP NEXT</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
+      darkMode: 'media',
       theme: {
         extend: {
           colors: {
-            navy: {
-              DEFAULT: '#1a237e',
-              light: '#283593',
-              dark: '#0d1642'
-            },
-            apple: '#f5f5f7'
+            navy: { DEFAULT: '#1a237e', light: '#283593', dark: '#0d1642' },
+            apple: { light: '#f5f5f7', dark: '#000000' }
           },
-          fontFamily: {
-            sans: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
+          fontFamily: { sans: ['"Inter"', '"Noto Sans JP"', 'sans-serif'] },
+          boxShadow: {
+            'neu-light': '8px 8px 16px #d1d1d6, -8px -8px 16px #ffffff',
+            'neu-dark': '8px 8px 16px #000000, -4px -4px 12px #1c1c1e',
           }
         }
       }
@@ -31,113 +30,79 @@
     .safe-top { padding-top: env(safe-area-inset-top); }
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .animate-spin-custom { animation: spin 1s linear infinite; }
+    #map { height: 100vh; width: 100%; transition: filter 0.5s ease; }
+    @media (prefers-color-scheme: dark) { #map { filter: invert(0.9) hue-rotate(180deg) brightness(1.2); } }
     
-    #map { height: 100vh; width: 100%; }
-    
-    /* Apple-style InfoWindow reset */
-    .gm-style-iw {
-      border-radius: 20px !important;
-      padding: 0 !important;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
-    }
+    .gm-style-iw { border-radius: 28px !important; padding: 0 !important; background: rgba(255,255,255,0.85) !important; backdrop-blur: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important; }
+    @media (prefers-color-scheme: dark) { .gm-style-iw { background: rgba(20,20,20,0.85) !important; color: #f5f5f7 !important; } }
     .gm-style-iw-d { overflow: hidden !important; }
-    .gm-ui-hover-effect { top: 10px !important; right: 10px !important; }
   </style>
 </head>
-<body class="bg-apple text-[#1d1d1f] font-sans antialiased overflow-hidden select-none">
+<body class="bg-apple-light dark:bg-apple-dark text-[#1d1d1f] dark:text-[#f5f5f7] font-sans antialiased overflow-hidden select-none transition-colors duration-500">
 
-  <!-- Loading Overlay -->
-  <div id="loading" class="fixed inset-0 bg-white z-[2000] flex flex-col items-center justify-center transition-opacity duration-500">
-    <div class="w-12 h-12 border-4 border-gray-100 border-t-navy rounded-full animate-spin-custom"></div>
-    <p class="mt-6 text-navy font-black tracking-tight uppercase text-xs tracking-[0.2em]">Strategy Data Syncing...</p>
+  <!-- Loading -->
+  <div id="loading" class="fixed inset-0 bg-white dark:bg-black z-[3000] flex flex-col items-center justify-center transition-opacity duration-700">
+    <div class="w-14 h-14 border-4 border-gray-100 dark:border-gray-900 border-t-navy dark:border-t-blue-500 rounded-full animate-spin"></div>
+    <p class="mt-8 text-navy dark:text-blue-400 font-black tracking-[0.4em] uppercase text-[10px]">Mapping Tactical Data...</p>
   </div>
 
   <div class="flex h-screen overflow-hidden">
     <!-- Map Area -->
-    <div id="map" class="flex-grow relative"></div>
+    <div id="map" class="flex-grow"></div>
 
-    <!-- Desktop Sidebar / Mobile Bottom Sheet -->
-    <aside id="sidebar" class="fixed bottom-0 left-0 right-0 md:relative md:w-80 bg-white/80 backdrop-blur-2xl border-t md:border-t-0 md:border-l border-gray-200 z-50 transition-all duration-300 transform translate-y-0 md:translate-y-0 p-6 flex flex-col max-h-[85vh] md:max-h-full rounded-t-[2.5rem] md:rounded-none shadow-2xl md:shadow-none">
+    <!-- Sidebar (Next-Gen Hybrid) -->
+    <aside id="sidebar" class="fixed bottom-0 left-0 right-0 md:relative md:w-96 bg-white/70 dark:bg-black/40 backdrop-blur-3xl border-t md:border-t-0 md:border-l border-white/10 z-[200] transition-all duration-500 p-8 flex flex-col max-h-[85vh] md:max-h-full rounded-t-[3rem] md:rounded-none shadow-2xl md:shadow-none safe-bottom">
       
-      <!-- Drag Handle for Mobile -->
-      <div class="md:hidden w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+      <div class="md:hidden w-16 h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full mx-auto mb-10"></div>
 
-      <header class="mb-8">
-        <h1 class="text-xl font-black tracking-tighter leading-none mb-1">
-          <span class="text-navy">STRATEGY</span> <span class="text-blue-500">CENTER</span>
+      <header class="mb-12">
+        <h1 class="text-2xl font-black tracking-tighter leading-none mb-2">
+          <span class="text-navy dark:text-blue-400">STRATEGY</span> <span class="text-blue-500">MAP</span>
         </h1>
-        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Election Command v2.0</p>
+        <p class="text-[10px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-[0.3em]">Command Center v3.0</p>
       </header>
 
-      <div class="grid grid-cols-2 md:grid-cols-1 gap-4 mb-8">
-        <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 ring-1 ring-black/[0.02]">
-          <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Progress</div>
-          <div id="progress-val" class="text-3xl font-black text-navy leading-none tracking-tighter">0%</div>
-          <div class="w-full h-1 bg-gray-100 rounded-full mt-3 overflow-hidden">
-            <div id="progress-bar" class="h-full bg-green-500 transition-all duration-1000" style="width: 0%"></div>
+      <div class="grid grid-cols-2 md:grid-cols-1 gap-6 mb-12">
+        <div class="bg-white/60 dark:bg-white/5 rounded-[2rem] p-6 shadow-neu-light dark:shadow-neu-dark border border-white/10">
+          <div class="text-[9px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-3">Achievement</div>
+          <div id="progress-val" class="text-4xl font-black text-navy dark:text-blue-400 tracking-tighter leading-none">0%</div>
+          <div class="w-full h-1.5 bg-apple-light dark:bg-apple-dark rounded-full mt-4 overflow-hidden">
+            <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-1000" style="width: 0%"></div>
           </div>
         </div>
 
-        <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 ring-1 ring-black/[0.02]">
-          <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Coverage</div>
-          <div id="done-count" class="text-2xl font-black text-navy leading-none tracking-tighter">0 <span class="text-xs text-gray-300">/ 0</span></div>
-          <p class="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-[0.1em]">Total Units</p>
+        <div class="bg-white/60 dark:bg-white/5 rounded-[2rem] p-6 shadow-neu-light dark:shadow-neu-dark border border-white/10">
+          <div class="text-[9px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-widest mb-3">Coverage</div>
+          <div id="done-count" class="text-3xl font-black text-navy dark:text-blue-400 tracking-tighter leading-none">0 <span class="text-xs text-gray-300 dark:text-gray-700">/ 0</span></div>
+          <p class="text-[9px] font-bold text-gray-400 dark:text-gray-600 mt-2 uppercase tracking-widest">Global Units</p>
         </div>
       </div>
 
       <div class="flex-1 overflow-y-auto hide-scrollbar">
-        <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Area Insights</h3>
-        <div id="area-items" class="space-y-3">
-          <!-- Area items will be injected here -->
+        <h3 class="text-[10px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-[0.2em] mb-6">Area Intelligence</h3>
+        <div id="area-items" class="space-y-4 pb-20">
+          <!-- Area items injected -->
         </div>
       </div>
-
-      <footer class="mt-6 pt-6 border-t border-gray-100">
-        <div class="flex items-center gap-6">
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 rounded-full bg-green-500 shadow-sm shadow-green-200"></div>
-            <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Done</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 rounded-full bg-red-400 shadow-sm shadow-red-200"></div>
-            <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Todo</span>
-          </div>
-        </div>
-      </footer>
     </aside>
   </div>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=<?= apiKey ?>&callback=initMap&language=ja" async defer></script>
 
   <script>
-    let map;
-    let markers = [];
-    let townCircles = [];
-    const ZOOM_THRESHOLD = 15;
+    let map; let markers = []; let townCircles = []; const ZOOM_THRESHOLD = 15;
 
     function initMap() {
-      const appleMapsStyle = [
-        { "featureType": "water", "stylers": [{ "color": "#7da8d8" }, { "lightness": 20 }] },
+      const appleStyle = [
+        { "featureType": "water", "stylers": [{ "color": "#7da8d8" }] },
         { "featureType": "landscape", "stylers": [{ "color": "#f5f5f7" }] },
         { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#ffffff" }] },
-        { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#ffffff" }, { "weight": 2 }] },
-        { "featureType": "poi", "stylers": [{ "visibility": "off" }] },
-        { "featureType": "transit", "stylers": [{ "visibility": "off" }] },
-        { "elementType": "labels.text.fill", "stylers": [{ "color": "#8c8c8c" }] },
-        { "elementType": "labels.text.stroke", "stylers": [{ "visibility": "off" }] }
+        { "featureType": "poi", "stylers": [{ "visibility": "off" }] }
       ];
 
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 34.862, lng: 136.538 },
-        zoom: 12,
-        styles: appleMapsStyle,
-        disableDefaultUI: false,
-        zoomControl: true,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false
+        zoom: 12, styles: appleStyle, disableDefaultUI: true, zoomControl: true
       });
 
       map.addListener("zoom_changed", updateVisibility);
@@ -145,168 +110,69 @@
     }
 
     function updateVisibility() {
-      const zoom = map.getZoom();
-      const showMarkers = zoom >= ZOOM_THRESHOLD;
-      markers.forEach(m => m.setVisible(showMarkers));
-      townCircles.forEach(c => c.setVisible(!showMarkers));
+      const show = map.getZoom() >= ZOOM_THRESHOLD;
+      markers.forEach(m => m.setVisible(show));
+      townCircles.forEach(c => c.setVisible(!show));
     }
 
     function drawMapContent(data) {
-      if (!data || !data.points || data.points.length === 0) {
-        hideLoading();
-        document.getElementById('progress-val').innerText = '0%';
-        document.getElementById('done-count').innerText = '0 / 0';
-        document.getElementById('area-items').innerHTML = '<div class="text-center py-10"><p class="text-xs font-bold text-gray-300 uppercase tracking-widest">No Strategic Data</p></div>';
-        return;
-      }
-
-      const geocoder = new google.maps.Geocoder();
+      if (!data || !data.points) { hideLoading(); return; }
       const { points, summary } = data;
-
-      Object.keys(summary).forEach((townName, i) => {
-        const s = summary[townName];
-        const rate = s.done / s.total;
-        if (s.lat && s.lng) {
-          createTownCircle(townName, { lat: s.lat, lng: s.lng }, rate, s);
-        } else {
-          setTimeout(() => {
-            geocoder.geocode({ address: s.address }, (results, status) => {
-              if (status === "OK") createTownCircle(townName, results[0].geometry.location, rate, s);
-            });
-          }, i * 150);
-        }
+      Object.keys(summary).forEach((name, i) => {
+        const s = summary[name]; const rate = s.done / s.total;
+        if (s.lat && s.lng) createTownCircle(name, { lat: s.lat, lng: s.lng }, rate, s);
       });
-
-      points.forEach((p, index) => {
-        if (p.lat && p.lng) {
-          createPointMarker(p, { lat: p.lat, lng: p.lng });
-        } else {
-          setTimeout(() => {
-            geocoder.geocode({ address: p.address }, (results, status) => {
-              if (status === "OK") createPointMarker(p, results[0].geometry.location);
-            });
-          }, index * 100);
-        }
-      });
-
-      updateSidebar(points, summary);
-      hideLoading();
+      points.forEach(p => { if (p.lat && p.lng) createPointMarker(p, { lat: p.lat, lng: p.lng }); });
+      updateSidebar(points, summary); hideLoading();
     }
 
-    function createTownCircle(townName, position, rate, s) {
+    function createTownCircle(name, pos, rate, s) {
+      const color = rate >= 0.8 ? "#4ade80" : rate >= 0.3 ? "#fbbf24" : "#f87171";
       const circle = new google.maps.Circle({
-        strokeColor: "#FFFFFF",
-        strokeOpacity: 0.5,
-        strokeWeight: 2,
-        fillColor: getProgressColor(rate),
-        fillOpacity: 0.4,
-        map: map,
-        center: position,
-        radius: 350,
+        strokeColor: "#FFFFFF", strokeOpacity: 0.8, strokeWeight: 2,
+        fillColor: color, fillOpacity: 0.5, map: map, center: pos, radius: 400,
         visible: map.getZoom() < ZOOM_THRESHOLD
       });
-      
       const content = `
-        <div class="p-4 font-sans">
-          <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Town Area</div>
-          <div class="text-lg font-black text-navy tracking-tight mb-2">${townName}</div>
-          <div class="flex items-center gap-3">
-            <div class="text-2xl font-black text-navy">${Math.round(rate*100)}%</div>
-            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Progress<br>${s.done}/${s.total}</div>
-          </div>
-        </div>
-      `;
-      
+        <div class="p-6 font-sans">
+          <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tactical Sector</div>
+          <div class="text-xl font-black text-navy dark:text-blue-400 tracking-tight mb-2">${name}</div>
+          <div class="text-2xl font-black text-navy dark:text-blue-400">${Math.round(rate*100)}% <span class="text-xs text-gray-300 ml-2">${s.done}/${s.total}</span></div>
+        </div>`;
       const info = new google.maps.InfoWindow({ content: content });
-      circle.addListener("click", () => {
-        info.setPosition(position);
-        info.open(map);
-      });
+      circle.addListener("click", () => { info.setPosition(pos); info.open(map); });
       townCircles.push(circle);
     }
 
-    function createPointMarker(p, position) {
+    function createPointMarker(p, pos) {
       const marker = new google.maps.Marker({
-        map: map,
-        position: position,
-        visible: map.getZoom() >= ZOOM_THRESHOLD,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8 + (parseInt(p.priority) * 3),
-          fillColor: p.status === "done" ? "#4ade80" : "#f87171",
-          fillOpacity: 0.9,
-          strokeWeight: 2,
-          strokeColor: "#ffffff",
-        },
+        map: map, position: pos, visible: map.getZoom() >= ZOOM_THRESHOLD,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: p.status === "done" ? "#4ade80" : "#f87171", fillOpacity: 0.9, strokeWeight: 2, strokeColor: "#ffffff" }
       });
-
-      const content = `
-        <div class="p-4 font-sans min-w-[200px]">
-          <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">${p.area}</div>
-          <div class="text-base font-black text-navy tracking-tight mb-4 border-b border-gray-100 pb-3">
-            ${p.address.replace(/\\n/g, '<br>')}
-          </div>
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Turnout</div>
-              <div class="font-black text-navy">${p.turnout}%</div>
-            </div>
-            <div>
-              <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Priority</div>
-              <div class="font-black text-navy">${"★".repeat(p.priority) || "STD"}</div>
-            </div>
-          </div>
-          <div class="bg-apple rounded-xl p-3">
-            <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Assigned To</div>
-            <div class="font-bold text-navy text-xs">${p.staff || "Pending"}</div>
-          </div>
-          ${p.strategy ? `<div class="mt-3 text-[11px] font-bold text-blue-600 bg-blue-50 p-2 rounded-lg">📝 ${p.strategy}</div>` : ""}
-        </div>
-      `;
-
-      const infoWindow = new google.maps.InfoWindow({ content: content });
-      marker.addListener("click", () => infoWindow.open(map, marker));
       markers.push(marker);
-    }
-
-    function getProgressColor(rate) {
-      if (rate >= 0.8) return "#4ade80";
-      if (rate >= 0.3) return "#fbbf24";
-      return "#f87171";
     }
 
     function updateSidebar(points, summary) {
       const done = points.filter(p => p.status === "done").length;
-      const total = points.length;
-      const rate = total > 0 ? done / total : 0;
-      
+      const total = points.length; const rate = total > 0 ? done / total : 0;
       document.getElementById("progress-val").innerText = Math.round(rate * 100) + "%";
       document.getElementById("progress-bar").style.width = (rate * 100) + "%";
-      document.getElementById("done-count").innerHTML = `${done} <span class="text-xs text-gray-300">/ ${total}</span>`;
+      document.getElementById("done-count").innerHTML = `${done} <span class="text-xs text-gray-400">/ ${total}</span>`;
 
-      const areaList = document.getElementById("area-items");
-      areaList.innerHTML = "";
-      
-      Object.keys(summary).slice(0, 15).forEach(town => {
-        const s = summary[town];
-        const r = s.total > 0 ? s.done / s.total : 0;
-        const item = document.createElement("div");
-        item.className = "flex items-center justify-between p-3 bg-apple rounded-2xl transition-all active:scale-[0.98]";
-        item.innerHTML = `
-          <span class="text-xs font-black text-navy tracking-tight">${town}</span>
-          <span class="text-[10px] font-black px-2 py-0.5 rounded-full ${r >= 0.8 ? 'bg-green-100 text-green-700' : r >= 0.3 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-600'}">
-            ${Math.round(r * 100)}%
-          </span>
+      const list = document.getElementById("area-items"); list.innerHTML = "";
+      Object.keys(summary).forEach(name => {
+        const s = summary[name]; const r = s.total > 0 ? s.done / s.total : 0;
+        const div = document.createElement("div");
+        div.className = "flex items-center justify-between p-5 bg-white/60 dark:bg-white/5 rounded-3xl shadow-neu-light dark:shadow-neu-dark border border-white/10 transition-all active:scale-[0.98]";
+        div.innerHTML = `
+          <span class="text-xs font-black text-navy dark:text-blue-400 tracking-tight">${name}</span>
+          <span class="text-[9px] font-black px-3 py-1 rounded-full ${r >= 0.8 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${Math.round(r * 100)}%</span>
         `;
-        areaList.appendChild(item);
+        list.appendChild(div);
       });
     }
 
-    function hideLoading() {
-      const loader = document.getElementById("loading");
-      loader.classList.add('opacity-0');
-      setTimeout(() => loader.style.display = "none", 500);
-    }
+    function hideLoading() { const l = document.getElementById("loading"); l.classList.add('opacity-0'); setTimeout(() => l.style.display = "none", 700); }
   </script>
 </body>
 </html>

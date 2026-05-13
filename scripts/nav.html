@@ -1,31 +1,19 @@
-<!-- Apple-style Floating Navigation Component -->
-<nav id="nav" class="fixed bottom-6 left-6 right-6 bg-white/90 backdrop-blur-2xl rounded-full shadow-2xl border border-white/20 flex justify-around items-center p-2 z-[100] ring-1 ring-black/5 animate-in slide-in-from-bottom-8 duration-700">
-  
-  <button class="nav-item flex flex-col items-center justify-center w-16 py-2 transition-all text-gray-300 group active:scale-90" onclick="switchPage('guide', this)">
-    <span class="text-2xl mb-1 transition-transform duration-300 group-[.active]:scale-125 group-[.active]:text-navy group-[.active]:translate-y-[-2px]">📖</span>
-    <span class="text-[9px] font-black uppercase tracking-tighter group-[.active]:text-navy group-[.active]:font-black">Guide</span>
+<!-- Next-Gen Floating Nav -->
+<nav class="fixed bottom-10 left-10 right-10 bg-white/60 dark:bg-white/5 backdrop-blur-3xl rounded-[3rem] shadow-neu-light dark:shadow-neu-dark border border-white/20 flex justify-around items-center p-3 z-[200]">
+  <button id="nav-howto" onclick="switchPage('guide', this)" class="nav-item flex flex-col items-center justify-center w-20 py-3 transition-all group active:scale-90">
+    <span class="text-3xl mb-1 transition-all group-active:scale-90 group-[.active]:drop-shadow-[0_0_8px_rgba(26,35,126,0.3)]">📋</span>
+    <span class="text-[9px] font-black uppercase tracking-widest group-[.active]:text-navy dark:group-[.active]:text-blue-400 opacity-40 group-[.active]:opacity-100">Guide</span>
   </button>
-
-  <button class="nav-item flex flex-col items-center justify-center w-16 py-2 transition-all text-gray-300 group active:scale-90" onclick="switchPage('area', this)">
-    <span class="text-2xl mb-1 transition-transform duration-300 group-[.active]:scale-125 group-[.active]:text-navy group-[.active]:translate-y-[-2px]">🗺️</span>
-    <span class="text-[9px] font-black uppercase tracking-tighter group-[.active]:text-navy group-[.active]:font-black">Areas</span>
+  <button id="nav-area" onclick="switchPage('area', this)" class="nav-item flex flex-col items-center justify-center w-20 py-3 transition-all group active:scale-90">
+    <span class="text-3xl mb-1 transition-all group-active:scale-90 group-[.active]:drop-shadow-[0_0_8px_rgba(26,35,126,0.3)]">📍</span>
+    <span class="text-[9px] font-black uppercase tracking-widest group-[.active]:text-navy dark:group-[.active]:text-blue-400 opacity-40 group-[.active]:opacity-100">Areas</span>
   </button>
-
-  <button class="nav-item flex flex-col items-center justify-center w-16 py-2 transition-all text-gray-300 group active:scale-90" onclick="switchPage('settings', this)">
-    <span class="text-2xl mb-1 transition-transform duration-300 group-[.active]:scale-125 group-[.active]:text-navy group-[.active]:translate-y-[-2px]">⚙️</span>
-    <span class="text-[9px] font-black uppercase tracking-tighter group-[.active]:text-navy group-[.active]:font-black">Settings</span>
+  <button id="nav-settings" onclick="switchPage('settings', this)" class="nav-item flex flex-col items-center justify-center w-20 py-3 transition-all group active:scale-90">
+    <span class="text-3xl mb-1 transition-all group-active:scale-90 group-[.active]:drop-shadow-[0_0_8px_rgba(26,35,126,0.3)]">⚙️</span>
+    <span class="text-[9px] font-black uppercase tracking-widest group-[.active]:text-navy dark:group-[.active]:text-blue-400 opacity-40 group-[.active]:opacity-100">Settings</span>
   </button>
-
 </nav>
 
 <style>
-  /* 
-     JavaScript 側で 'active' クラスが付与された際の挙動 
-  */
-  .nav-item.active {
-    color: #1a237e !important;
-  }
-  .nav-item.active span {
-    color: #1a237e !important;
-  }
+  .nav-item.active { @apply opacity-100; }
 </style>
