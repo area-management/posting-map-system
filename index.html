@@ -175,19 +175,19 @@
       </div>
     </div>
   </header>
-  <div class="view-container" id="main-view"></div>
-  <nav class="nav-bar">
-    <div class="nav-item" onclick="switchTab('manual')" id="nav-manual">
-      <div class="nav-icon">📖</div>
-      <div class="nav-label">使い方</div>
+  <div class="view-container" id="view-content"></div>
+  <nav class="bottom-nav">
+    <div class="nav-item" id="nav-howto" onclick="switchTab('howto')">
+      <i>📖</i>
+      <div>使いかた</div>
     </div>
-    <div class="nav-item" onclick="switchTab('area')" id="nav-area">
-      <div class="nav-icon">🗺️</div>
-      <div class="nav-label">エリア</div>
+    <div class="nav-item" id="nav-area" onclick="switchTab('area')">
+      <i>🗺️</i>
+      <div>エリア</div>
     </div>
-    <div class="nav-item" onclick="switchTab('settings')" id="nav-settings">
-      <div class="nav-icon">⚙️</div>
-      <div class="nav-label">設定</div>
+    <div class="nav-item" id="nav-settings" onclick="switchTab('settings')">
+      <i>⚙️</i>
+      <div>設定</div>
     </div>
   </nav>
 </div>
