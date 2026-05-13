@@ -125,11 +125,12 @@
 
 <div id="app-shell" class="hidden">
   <header style="padding-top: env(safe-area-inset-top); background: white; border-bottom: 1px solid #f0f0f0;">
-    <div style="display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px;">
+    <div style="display: flex; align-items: center; height: 60px; padding: 0 20px;">
       <div style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px;">
         <span style="color: #1a237e;">POSTING</span> <span style="color: #2196f3;">MAP</span>
       </div>
-      <div id="header-sync" style="font-size: 11px; font-weight: 800; color: #4caf50; display: flex; align-items: center;">
+      <!-- 右揃えに修正 -->
+      <div id="header-sync" style="margin-left: auto; font-size: 11px; font-weight: 800; color: #4caf50; display: flex; align-items: center;">
         <span style="margin-right: 4px;">●</span> <span id="sync-pct">0%</span> SYNC
       </div>
     </div>
@@ -159,25 +160,25 @@
 
   async function api(action, params = {}, method = 'GET') {
     const url = new URL(API_URL);
-    url.searchParams.append('action', action); // 全てのメソッドでactionはURLクエリに含める（GASの仕様対策）
+    url.searchParams.append('action', action);
     
     try {
       const options = { 
         method: method,
-        mode: 'cors',
-        credentials: 'omit'
+        redirect: 'follow'
       };
       if (method === 'POST') {
-        options.body = JSON.stringify(params);
+        // GASで確実に受け取れるようにフォーム形式で送る
+        const formData = new FormData();
+        formData.append('json', JSON.stringify({ action, ...params }));
+        options.body = formData;
       } else {
         Object.keys(params).forEach(k => url.searchParams.append(k, params[k]));
       }
       
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error("Network response was not ok");
       return await response.json();
     } catch (err) {
-      console.error("API Error:", err);
       return null;
     }
   }

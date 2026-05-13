@@ -45,12 +45,18 @@ function doGet(e) {
 function doPost(e) {
   let postData;
   try {
-    postData = JSON.parse(e.postData.contents);
+    if (e.postData && e.postData.contents) {
+      postData = JSON.parse(e.postData.contents);
+    } else if (e.parameter.json) {
+      postData = JSON.parse(e.parameter.json);
+    } else {
+      postData = e.parameter;
+    }
   } catch (f) {
     postData = e.parameter;
   }
 
-  const action = postData.action;
+  const action = postData.action || e.parameter.action;
   let response;
 
   try {
