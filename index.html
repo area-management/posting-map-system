@@ -54,6 +54,7 @@
     .view-container { 
       flex: 1; overflow: hidden; background: var(--light-bg); 
       padding: 12px; display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
     }
     /* 登録カードの調整 */
     .setup-card {
@@ -62,7 +63,7 @@
       padding: 32px 24px;
       margin: 0;
       width: 100%;
-      height: calc(100vh - (env(safe-area-inset-top) + 44px + 12px + 12px + 70px + env(safe-area-inset-bottom)));
+      height: 100%;
       box-shadow: 0 10px 30px rgba(0,0,0,0.05);
       flex: 1;
     }
