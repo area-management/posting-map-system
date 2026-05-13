@@ -7,6 +7,19 @@
 // =============================
 const SPREADSHEET_ID = '1KuA5pN0ItODhwSJph-fwgj_U_ZyHrn9Osew92D99xBs';
 
+// シート名・設定の定義
+const CONFIG = {
+  SHEET_GUIDE: "全体進捗",
+  SHEET_ROSTER: "配布員名簿",
+  SHEET_TEMPLATE: "TEMPLATE",
+  SHEET_POSTAL: "郵便番号",
+  SHEET_DISTRICT: "地区割",
+  SHEET_MASTER_EXPORT: "マスター書き出し",
+  SHEET_REPORT: "報告ログ",
+  SHEET_MANUAL: "マニュアル",
+  TARGET_GOAL: 50000 // デフォルトの目標数
+};
+
 function getSS() {
   return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
