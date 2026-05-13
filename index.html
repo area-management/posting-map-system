@@ -120,25 +120,34 @@
 
   <!-- Gateway / Splash Screen (Safari用) -->
   <div id="screen-gateway" class="hidden">
-    <div style="height:100vh; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:12vh; text-align:center; background:#ffffff; position:fixed; inset:0; z-index:9999;">
+    <div style="height:100vh; width:100%; display:flex; flex-direction:column; align-items:center; background:#ffffff; position:fixed; inset:0; z-index:9999;">
       
-      <!-- アイコン -->
-      <div style="width:90px; height:90px; background:white; border-radius:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 25px rgba(0,0,0,0.05); margin-bottom:25px;">
-        <img src="https://area-management.github.io/posting-map-system/assets/icon180-v2.png?v=70" width="60">
-      </div>
+      <!-- 上部スペーサー -->
+      <div style="flex: 1.2;"></div>
       
-      <!-- メッセージ（サイズを19pxで統一） -->
-      <div style="margin-bottom:40px; padding:0 30px;">
-        <p style="font-size:19px; font-weight:900; color:#e63946; line-height:1.7; text-shadow: 1px 1px 1px rgba(0,0,0,0.05); white-space: nowrap;">
-          ホーム画面に追加してから<br>
-          起動してください
-        </p>
+      <!-- コンテンツブロック -->
+      <div style="width:100%; display:flex; flex-direction:column; align-items:center; padding:0 30px;">
+        <!-- アイコン -->
+        <div style="width:100px; height:100px; background:white; border-radius:26px; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 35px rgba(0,0,0,0.06); margin-bottom:40px;">
+          <img src="https://area-management.github.io/posting-map-system/assets/icon180-v2.png?v=70" width="65">
+        </div>
+        
+        <!-- メッセージ -->
+        <div style="margin-bottom:60px;">
+          <p style="font-size:20px; font-weight:900; color:#e63946; line-height:1.7; text-shadow: 1px 1px 1px rgba(0,0,0,0.05); white-space: nowrap;">
+            ホーム画面に追加してから<br>
+            起動してください
+          </p>
+        </div>
+
+        <!-- ボタン -->
+        <button class="btn-submit" onclick="forceStart()" style="background:#d47c00; color:white; border:none; padding:20px 0; border-radius:40px; font-size:18px; font-weight:900; box-shadow:0 10px 25px rgba(212,124,0,0.25); width:100%; max-width:280px;">
+          アプリを起動する
+        </button>
       </div>
 
-      <!-- ボタン -->
-      <button class="btn-submit" onclick="forceStart()" style="background:#d47c00; color:white; border:none; padding:18px 0; border-radius:40px; font-size:17px; font-weight:900; box-shadow:0 10px 20px rgba(212,124,0,0.25); width:100%; max-width:260px;">
-        アプリを起動する
-      </button>
+      <!-- 下部スペーサー（Safariのバーを考慮して少し長めに） -->
+      <div style="flex: 2;"></div>
     </div>
   </div>
 
