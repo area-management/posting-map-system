@@ -120,22 +120,23 @@
 
   <!-- Gateway / Splash Screen (Safari用) -->
   <div id="screen-gateway" class="hidden">
-    <div style="height:100vh; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; text-align:center; background:#ffffff; position:fixed; inset:0; z-index:9999;">
-      <img src="https://area-management.github.io/posting-map-system/assets/icon180-v2.png?v=70" width="140" style="border-radius:35px; box-shadow:0 15px 40px rgba(0,0,0,0.15); margin-bottom:40px;">
+    <div style="height:100vh; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; text-align:center; background:#f8f9fa; position:fixed; inset:0; z-index:9999;">
+      <div style="width:120px; height:120px; background:white; border-radius:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,0.05); margin-bottom:40px;">
+        <img src="https://area-management.github.io/posting-map-system/assets/icon180-v2.png?v=70" width="80">
+      </div>
       
-      <h1 style="font-size:42px; font-weight:900; color:#e63946; margin:0; letter-spacing:-1px; text-shadow: 2px 2px 0px rgba(0,0,0,0.05);">
+      <h1 style="font-size:36px; font-weight:900; color:#d47c00; margin:0; letter-spacing:1px;">
         ポスティング
       </h1>
       
-      <div style="margin:30px 0 50px;">
-        <p style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:8px;">ホーム画面に追加して起動</p>
-        <p style="font-size:13px; color:var(--muted); line-height:1.6;">
-          下の共有ボタンから<br>
-          「ホーム画面に追加」を選択してください
+      <div style="margin:40px 0;">
+        <p style="font-size:15px; color:#555; line-height:1.8;">
+          ホーム画面に追加してから<br>
+          起動してください
         </p>
       </div>
 
-      <button class="btn-submit" onclick="forceStart()" style="background:#e63946; color:white; border:none; padding:20px 50px; border-radius:50px; font-size:18px; font-weight:900; box-shadow:0 10px 25px rgba(230,57,70,0.3); width:80%; max-width:300px;">
+      <button class="btn-submit" onclick="forceStart()" style="background:#d47c00; color:white; border:none; padding:18px 0; border-radius:40px; font-size:18px; font-weight:900; box-shadow:0 10px 20px rgba(212,124,0,0.25); width:100%; max-width:280px;">
         アプリを起動する
       </button>
     </div>
