@@ -166,16 +166,24 @@
     document.getElementById('screen-gateway').classList.add('hidden');
     document.getElementById('app-shell').classList.remove('hidden');
     
-    // まず設定（登録）画面を出す（通信待ちで真っ白にしない）
+    // 1. まずローカルキャッシュがあれば即座に表示（爆速体験）
+    const cached = localStorage.getItem('posting_app_cache');
+    if (cached) {
+      appData = JSON.parse(cached);
+      renderView();
+    }
+    
     switchTab(currentUser ? 'area' : 'settings');
     
-    showLoading('同期中...');
+    // 2. 裏で最新データを取得
+    if (!cached) showLoading('同期中...');
     try {
       const data = await api('getAppData');
       hideLoading();
       
       if (data) {
         appData = data;
+        localStorage.setItem('posting_app_cache', JSON.stringify(data)); // キャッシュ更新
         const syncVal = currentUser ? '100%' : '0%';
         const badge = document.getElementById('sync-pct');
         if (badge) badge.textContent = syncVal;
@@ -185,9 +193,8 @@
       }
     } catch (e) {
       hideLoading();
-      console.error("Initial load failed:", e);
-      // エラーの具体的な中身をトーストに出す
-      showToast('通信エラー: ' + e.message, true);
+      console.error("Sync failed:", e);
+      if (!appData) showToast('通信エラー: 再試行してください', true);
       renderView();
     }
   }

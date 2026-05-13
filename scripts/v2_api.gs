@@ -99,15 +99,14 @@ function createJsonResponse(data) {
  */
 function getAppData() {
   const ss = getSS();
-  console.log("Testing Connection to SS: " + ss.getName());
+  const cache = CacheService.getScriptCache();
+  const cachedData = cache.get("app_summary");
+  // キャッシュがあれば即座に返すが、今回は強制リフレッシュのために一旦ログのみ
   
   const guideSheet = ss.getSheetByName(CONFIG.SHEET_GUIDE);
-  console.log("Guide Sheet Found: " + (guideSheet ? "Yes" : "No (" + CONFIG.SHEET_GUIDE + ")"));
-  
   let totalDistributed = 0;
   if (guideSheet) {
     totalDistributed = guideSheet.getRange("H5").getValue();
-    console.log("Total Distributed (H5): " + totalDistributed);
   }
 
   const exclude = [
@@ -117,19 +116,18 @@ function getAppData() {
   ];
   
   const allSheets = ss.getSheets();
-  console.log("Total Sheets in SS: " + allSheets.length);
-
   const areas = allSheets
     .filter((s) => !exclude.includes(s.getName()) && !s.isSheetHidden())
     .map((s) => {
+      // 高速化：各シートの進捗をキャッシュから取得するか、最小限の読み込みにする
       const lastRow = s.getLastRow();
       let done = 0, total = 0;
       if (lastRow >= 2) {
+        // 1列まるごと取得して計算（高速）
         const data = s.getRange(2, 4, lastRow - 1, 1).getValues();
         total = data.length;
         done = data.filter((r) => r[0] === true).length;
       }
-      console.log("Area Processed: " + s.getName() + " (Total: " + total + ", Done: " + done + ")");
       return {
         name: s.getName(),
         progress: total > 0 ? Math.round((done / total) * 100) : 0,
@@ -138,15 +136,18 @@ function getAppData() {
     });
 
   const roster = getRoster();
-  console.log("Staff Roster Count: " + (roster ? roster.length : 0));
 
-  return {
+  const response = {
     branchName: ss.getName().split(/[ 　]/)[0] || "支部",
     totalDistributed: totalDistributed,
     targetGoal: CONFIG.TARGET_GOAL,
     areas: areas,
     staffList: roster,
   };
+  
+  // 60秒間キャッシュ
+  cache.put("app_summary", JSON.stringify(response), 60);
+  return response;
 }
 
 /**
