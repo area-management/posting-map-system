@@ -40,10 +40,14 @@
 
     /* Main Shell */
     #app-shell { display: flex; flex-direction: column; height: 100vh; }
-    header { padding-top: env(safe-area-inset-top); background: white; border-bottom: 1px solid #f0f0f0; }
-    .header-content { display: flex; align-items: center; height: 60px; padding: 0 20px; }
-    .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
-    .sync-badge { margin-left: auto; font-size: 11px; font-weight: 800; color: var(--green); display: flex; align-items: center; }
+    header { 
+      padding: env(safe-area-inset-top) 20px 10px;
+      display: flex; justify-content: space-between; align-items: flex-end;
+      background: transparent; z-index: 100;
+    }
+    .header-content { display: contents; }
+    .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: var(--navy); }
+    .sync-badge { font-size: 11px; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: 4px; }
 
     /* Navigation */
     .nav-bar {
