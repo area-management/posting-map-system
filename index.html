@@ -42,14 +42,12 @@
     #app-shell { display: flex; flex-direction: column; height: 100vh; }
     header { 
       padding: calc(env(safe-area-inset-top) + 12px) 24px 12px;
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      background: white; border-bottom: 1px solid #f0f0f0;
-      z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      background: white; border-bottom: 1px solid #f0f0f0; z-index: 100;
     }
-    .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: var(--navy); }
+    .header-left { display: flex; flex-direction: column; align-items: flex-start; }
+    .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.1; }
+    .page-title-mini { font-size: 11px; font-weight: 800; color: #999; margin-top: 2px; }
     .sync-badge { font-size: 11px; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: 4px; }
 
     /* Components */
@@ -163,11 +161,12 @@
 
 <div id="app-shell" class="hidden">
   <header>
-    <div class="header-content">
+    <div class="header-left">
       <div class="logo"><span style="color:var(--navy)">POSTING</span> <span style="color:var(--blue)">MAP</span></div>
-      <div class="sync-badge" id="header-sync">
-        <span style="margin-right:4px;">●</span> <span id="sync-pct">0%</span> SYNC
-      </div>
+      <div id="view-title-text" class="page-title-mini">設定・配布員登録</div>
+    </div>
+    <div class="sync-badge" id="header-sync">
+      <span style="margin-right:4px;">●</span> <span id="sync-pct">0%</span> SYNC
     </div>
   </header>
   <div class="view-container" id="view-content"></div>
@@ -274,16 +273,19 @@
 
   function renderView() {
     const main = document.getElementById('view-content');
+    const headerTitle = document.getElementById('view-title-text');
     if (!main) return;
     main.innerHTML = '';
     
     if (currentTab === 'settings') {
+      headerTitle.innerText = '設定・配布員登録';
       renderSettings();
     } else if (currentTab === 'area') {
+      headerTitle.innerText = '配布エリア一覧';
       renderAreaList();
     } else if (currentTab === 'howto') {
+      headerTitle.innerText = '使いかた';
       main.innerHTML = `
-        <div class="view-title">使いかた</div>
         <div class="setup-card">
           <h2>準備中です</h2>
           <p>マニュアルコンテンツを現在作成しています。しばらくお待ちください。</p>
@@ -295,7 +297,6 @@
   function renderSettings() {
     const main = document.getElementById('view-content');
     main.innerHTML = `
-      <div class="view-title">設定・配布員登録</div>
       <div class="setup-card">
         <div class="status-badge" style="background:${currentUser?'#e8f5e9':'#fff3e0'}; color:${currentUser?'#2e7d32':'#ef6c00'};">
           ${currentUser ? '登録済み' : '未登録'}
@@ -332,7 +333,7 @@
           <div style="font-size:14px; font-weight:900; color:#999;">${a.progress}%</div>
         </div>
       `).join('');
-    main.innerHTML = `<div class="view-title">配布エリア一覧</div>${list}`;
+    main.innerHTML = list;
   }
 
   async function handleRegister() {
