@@ -1,62 +1,57 @@
-<style>
-  .guide-card {
-    background: #fff; border-radius: 20px; padding: 24px; margin-bottom: 20px;
-    border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-    position: relative; overflow: hidden;
-  }
-  .guide-card::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--blue);
-  }
-  .step-num {
-    display: flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; background: var(--blue); color: #fff;
-    border-radius: 50%; font-weight: 900; font-size: 14px; margin-bottom: 12px;
-  }
-  .guide-step h3 { font-size: 18px; font-weight: 900; color: var(--navy); margin-bottom: 8px; }
-  .guide-step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+<div id="page-guide" class="page animate-in fade-in slide-in-from-bottom-4 duration-500">
   
-  .welcome-box {
-    text-align: center; padding: 40px 20px;
-  }
-  .welcome-box h2 { font-size: 26px; font-weight: 900; color: var(--navy); margin-bottom: 10px; }
-  .welcome-box p { font-size: 14px; color: var(--muted); letter-spacing: 0.05em; }
-</style>
-
-<div id="page-guide" class="page">
-  <div class="welcome-box">
-    <h2>らくらくガイド</h2>
-    <p>3ステップで報告完了！</p>
+  <!-- Welcome Header -->
+  <div class="py-16 px-6 text-center">
+    <h2 class="text-3xl font-black text-navy tracking-tighter mb-3">らくらくガイド</h2>
+    <p class="text-sm font-bold text-gray-400 uppercase tracking-[0.2em]">Quick Start Guide</p>
   </div>
 
-  <!-- Step 1 -->
-  <div class="guide-card">
-    <div class="step-num">1</div>
-    <div class="guide-step">
-      <h3>名前を登録</h3>
-      <p>「設定」タブからお名前を登録してください。一度登録すればずっと使えます。</p>
+  <div class="space-y-6 px-2">
+    <!-- Step 1 -->
+    <div class="bg-white rounded-[2rem] p-8 shadow-sm ring-1 ring-black/[0.01] relative overflow-hidden group active:scale-[0.98] transition-all">
+      <div class="absolute -right-4 -top-8 text-[8rem] font-black text-apple select-none group-hover:text-blue-50 transition-colors">1</div>
+      <div class="relative z-10">
+        <div class="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center text-xl font-black mb-6 shadow-lg shadow-blue-100">👤</div>
+        <h3 class="text-xl font-black text-navy mb-3 tracking-tight">名前を登録</h3>
+        <p class="text-sm text-gray-500 font-medium leading-relaxed">「設定」タブからお名前を登録してください。一度登録すれば、次からは入力不要です。</p>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="bg-white rounded-[2rem] p-8 shadow-sm ring-1 ring-black/[0.01] relative overflow-hidden group active:scale-[0.98] transition-all">
+      <div class="absolute -right-4 -top-8 text-[8rem] font-black text-apple select-none group-hover:text-blue-50 transition-colors">2</div>
+      <div class="relative z-10">
+        <div class="w-12 h-12 bg-indigo-500 text-white rounded-2xl flex items-center justify-center text-xl font-black mb-6 shadow-lg shadow-indigo-100">🗺️</div>
+        <h3 class="text-xl font-black text-navy mb-3 tracking-tight">エリアを選択</h3>
+        <p class="text-sm text-gray-500 font-medium leading-relaxed">「エリア」タブから配布する町名を選びます。📍ボタンを押すと地図で場所を確認できます。</p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="bg-white rounded-[2rem] p-8 shadow-sm ring-1 ring-black/[0.01] relative overflow-hidden group active:scale-[0.98] transition-all">
+      <div class="absolute -right-4 -top-8 text-[8rem] font-black text-apple select-none group-hover:text-blue-50 transition-colors">3</div>
+      <div class="relative z-10">
+        <div class="w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center text-xl font-black mb-6 shadow-lg shadow-green-100">✅</div>
+        <h3 class="text-xl font-black text-navy mb-3 tracking-tight">配布報告</h3>
+        <p class="text-sm text-gray-500 font-medium leading-relaxed">「配布完了」にチェックを入れれば完了！あなたの名前で自動的に記録されます。</p>
+      </div>
     </div>
   </div>
 
-  <!-- Step 2 -->
-  <div class="guide-card">
-    <div class="step-num">2</div>
-    <div class="guide-step">
-      <h3>エリアを選択</h3>
-      <p>「エリア」タブから配布する町名を選びます。📍ボタンで地図が開きます。</p>
+  <div class="py-16 text-center">
+    <div class="text-[10px] font-black text-gray-300 uppercase tracking-[0.3em] mb-2">System Architecture</div>
+    <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+      VERSION 2.7.0<br>
+      <span class="text-navy/20 mt-1 inline-block">© 2026 Posting Strategy System</span>
     </div>
-  </div>
-
-  <!-- Step 3 -->
-  <div class="guide-card">
-    <div class="step-num">3</div>
-    <div class="guide-step">
-      <h3>配布報告</h3>
-      <p>「配布完了」にチェックを入れ、枚数を選べば完了！自動であなたの名前が記録されます。</p>
-    </div>
-  </div>
-
-  <div style="padding: 40px 20px; text-align: center; color: var(--muted); font-size: 12px; font-weight: 700;">
-    VERSION 2.6.0<br>
-    © 2026 Posting Strategy System
   </div>
 </div>
+
+<style>
+  /* 
+     Tailwind で表現しきれない微細な調整
+  */
+  #page-guide .page {
+    background-color: transparent;
+  }
+</style>

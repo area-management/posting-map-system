@@ -1,36 +1,48 @@
-<style>
-  #area-list { margin-top: 8px; }
-  .area-item {
-    background: var(--card); border-radius: 20px; padding: 18px 20px;
-    margin-bottom: 14px; display: flex; flex-direction: column; gap: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer; -webkit-tap-highlight-color: transparent;
-    border: 1px solid transparent;
-  }
-  .area-item:active { transform: scale(0.97); background: #fafafa; }
-
-  .area-top { display: flex; align-items: center; gap: 12px; }
-  .area-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
-  .area-name { flex: 1; font-size: 16px; font-weight: 900; color: var(--navy); letter-spacing: -0.01em; }
-  .area-meta { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.05em; }
-
-  .area-progress-bg { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; position: relative; }
-  .area-progress-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease-out; }
-
-  .area-chevron { color: #d0d7de; font-size: 18px; font-weight: 400; }
-</style>
-
-<div id="page-area" class="page">
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-    <h2 style="font-size: 20px; font-weight: 900;">エリア一覧</h2>
-    <div style="font-size: 13px; font-weight: 700; color: var(--muted);">
-      全 <span id="area-total" style="color: var(--text);">0</span> エリア
+<div id="page-area" class="page animate-in fade-in slide-in-from-bottom-4 duration-500">
+  
+  <!-- Area Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h2 class="text-2xl font-black text-navy tracking-tight leading-none">エリア一覧</h2>
+      <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Operational Sectors</p>
+    </div>
+    <div class="bg-white px-4 py-2 rounded-2xl shadow-sm ring-1 ring-black/[0.02]">
+      <div class="text-[9px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">Total Sectors</div>
+      <div id="area-total" class="text-lg font-black text-navy leading-none tracking-tighter">0</div>
     </div>
   </div>
 
-  <div id="area-list">
-    <div style="padding: 40px; text-align: center; color: var(--muted);">
-      データを読み込み中...
+  <!-- Area List Container -->
+  <div id="area-list" class="space-y-4 pb-24">
+    <div class="py-20 text-center">
+      <div class="w-10 h-10 border-4 border-gray-100 border-t-navy rounded-full animate-spin-custom mx-auto mb-6"></div>
+      <p class="text-xs font-black text-gray-300 uppercase tracking-widest">Loading Strategic Data...</p>
     </div>
   </div>
+
 </div>
+
+<style>
+  /* 
+     JavaScript 側で生成される各アイテム (.area-item) 用の
+     Tailwind クラスを補足（または JS側で直接クラス指定）
+  */
+  .area-card-premium {
+    background: white;
+    border-radius: 1.75rem; /* 28px */
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .area-card-premium:active {
+    transform: scale(0.97);
+    background-color: #f9fafb;
+    box-shadow: 0 0 0 rgba(0,0,0,0);
+  }
+</style>

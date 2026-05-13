@@ -1,59 +1,69 @@
-<style>
-  .kpi-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  .kpi-card { background: #fff; padding: 16px; border-radius: 16px; text-align: center; }
-  .kpi-val { font-size: 20px; font-weight: 900; color: var(--navy); margin-bottom: 4px; }
-  .kpi-label { font-size: 11px; font-weight: 700; color: var(--muted); }
+<div id="page-progress" class="page animate-in fade-in slide-in-from-bottom-4 duration-500">
+  
+  <div class="mb-8">
+    <h2 class="text-2xl font-black text-navy tracking-tight leading-none">配布進捗</h2>
+    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Live Performance Tracking</p>
+  </div>
 
-  .progress-section { background: var(--navy); color: #fff; padding: 24px; border-radius: 20px; margin-bottom: 24px; }
-  .progress-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
-  .progress-pct { font-size: 32px; font-weight: 900; line-height: 1; }
-  .progress-count { font-size: 13px; font-weight: 500; opacity: 0.8; }
-  .progress-bar-bg { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-  .progress-bar-fill { height: 100%; background: var(--cyan); width: 0%; transition: width 1s ease-out; }
-
-  .rank-item {
-    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-    background: #fff; border-radius: 12px; margin-bottom: 8px;
-  }
-  .rank-num {
-    width: 28px; height: 28px; border-radius: 50%; background: var(--bg);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 900; color: var(--muted);
-  }
-  .rank-num.gold { background: #FFD700; color: #fff; }
-  .rank-num.silver { background: #C0C0C0; color: #fff; }
-  .rank-num.bronze { background: #CD7F32; color: #fff; }
-  .rank-name { flex: 1; font-size: 14px; font-weight: 700; }
-  .rank-count { font-size: 14px; font-weight: 900; color: var(--blue); }
-  .rank-count span { font-size: 10px; font-weight: 500; color: var(--muted); margin-left: 2px; }
-</style>
-
-<div id="page-progress" class="page">
-  <h2 style="font-size: 20px; font-weight: 900; margin-bottom: 20px;">配布進捗</h2>
-
-  <div class="progress-section">
-    <div class="progress-header">
-      <div class="progress-pct" id="progress-pct-main">0%</div>
-      <div class="progress-count"><span id="area-done">0</span> / <span id="area-total">0</span> 軒</div>
+  <!-- Hero Progress Card -->
+  <div class="bg-navy rounded-[2.5rem] p-8 text-white shadow-2xl shadow-navy/20 relative overflow-hidden ring-1 ring-white/10 mb-8">
+    <div class="flex justify-between items-end mb-6 relative z-10">
+      <div id="progress-pct-main" class="text-5xl font-black tracking-tighter leading-none">0%</div>
+      <div class="text-[10px] font-black uppercase tracking-widest opacity-60">
+        <span id="area-done">0</span> / <span id="area-total">0</span> <span class="ml-1">Units</span>
+      </div>
     </div>
-    <div class="progress-bar-bg">
-      <div id="progress-bar-fill" class="progress-bar-fill"></div>
+    <div class="h-2 bg-white/10 rounded-full overflow-hidden relative z-10 mb-2">
+      <div id="progress-bar-fill" class="h-full bg-blue-400 rounded-full transition-all duration-1000" style="width: 0%"></div>
+    </div>
+    <p class="text-[9px] font-bold text-white/40 uppercase tracking-[0.2em] relative z-10">Strategic Coverage Area</p>
+    
+    <!-- Decorative Glow -->
+    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-500 rounded-full blur-[80px] opacity-30"></div>
+  </div>
+
+  <!-- KPI Grid -->
+  <div class="grid grid-cols-2 gap-4 mb-10">
+    <div class="bg-white rounded-[2rem] p-6 shadow-sm ring-1 ring-black/[0.01]">
+      <div id="kpi-sheets" class="text-3xl font-black text-navy tracking-tighter leading-none mb-2">0</div>
+      <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Global Sectors</div>
+    </div>
+    <div class="bg-white rounded-[2rem] p-6 shadow-sm ring-1 ring-black/[0.01]">
+      <div id="kpi-staff" class="text-3xl font-black text-navy tracking-tighter leading-none mb-2">0</div>
+      <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Staff</div>
     </div>
   </div>
 
-  <div class="kpi-container">
-    <div class="kpi-card">
-      <div class="kpi-val" id="kpi-sheets">0</div>
-      <div class="kpi-label">エリア数</div>
+  <!-- Ranking Section -->
+  <div class="bg-white rounded-[2.5rem] p-8 shadow-sm ring-1 ring-black/[0.01]">
+    <div class="flex justify-between items-center mb-8">
+      <h3 class="text-sm font-black text-navy tracking-tight uppercase">🏆 Staff Ranking</h3>
+      <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Top Performers</span>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-val" id="kpi-staff">0</div>
-      <div class="kpi-label">参加スタッフ</div>
+    
+    <div id="ranking-list" class="space-y-6">
+      <!-- Dynamic ranking will be injected here -->
+      <div class="py-10 text-center font-bold text-gray-300 uppercase text-[9px] tracking-widest">Syncing Performance Data...</div>
     </div>
   </div>
 
-  <h3 class="section-title">スタッフランキング</h3>
-  <div id="ranking-list">
-    <!-- 動的に生成されます -->
+  <div class="py-16 text-center opacity-20 select-none">
+    <p class="text-[9px] font-black text-navy uppercase tracking-[0.4em]">Strategic Monitoring</p>
   </div>
 </div>
+
+<style>
+  /* 
+     JavaScript 側で生成されるランキング要素用の
+     Tailwind クラス補完
+  */
+  .rank-row-premium {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .rank-badge-gold   { background-color: #fef3c7; color: #92400e; }
+  .rank-badge-silver { background-color: #f1f5f9; color: #475569; }
+  .rank-badge-bronze { background-color: #ffedd5; color: #9a3412; }
+  .rank-badge-none   { background-color: #f9fafb; color: #9ca3af; }
+</style>

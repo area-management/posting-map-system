@@ -10,7 +10,10 @@
  * 2. なければ PropertiesService をチェック
  * 3. なければ再計算
  */
-function getMapData() {
+/**
+ * 戦況マップダッシュボード用：全体サマリー取得（爆速キャッシュ版）
+ */
+function getDashboardData() {
   const cache = CacheService.getScriptCache();
   const fastCached = cache.get("AREA_SUMMARY_FAST_CACHE");
   if (fastCached) return JSON.parse(fastCached);

@@ -1,53 +1,58 @@
-<style>
-  .detail-header {
-    display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
-  }
-  .back-btn {
-    width: 40px; height: 40px; border-radius: 50%; background: #fff;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: none; font-size: 20px;
-  }
-  .detail-card {
-    border-left: 5px solid var(--border); transition: border-color 0.3s ease;
-    padding: 16px !important;
-  }
-  .detail-card:has(input:checked) { border-left-color: var(--green); }
-
-  .detail-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
-  .detail-address-box { flex: 1; }
-  .detail-address { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.4; margin-bottom: 4px; }
-  .detail-memo { font-size: 12px; color: var(--muted); font-weight: 500; }
-
-  .map-btn {
-    display: flex; align-items: center; justify-content: center; gap: 4px;
-    background: var(--bg); color: var(--blue); padding: 8px 12px; border-radius: 8px;
-    text-decoration: none; font-size: 13px; font-weight: 700; border: 1px solid var(--border);
-    white-space: nowrap;
-  }
-
-  .detail-controls { display: flex; flex-direction: column; gap: 16px; }
-
-  .detail-check { display: flex; align-items: center; gap: 10px; }
-  .detail-check input[type="checkbox"] {
-    width: 24px; height: 24px; accent-color: var(--green);
-  }
-  .detail-check label { font-size: 14px; font-weight: 700; }
-
-  .detail-inputs { display: flex; gap: 8px; }
-  .detail-inputs select {
-    flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--bg); font-size: 13px; font-weight: 700; color: var(--text);
-    -webkit-appearance: none; appearance: none;
-  }
-</style>
-
-<div id="page-area-detail" class="page">
-  <div class="detail-header">
-    <button class="back-btn" onclick="switchPage('area')">‹</button>
-    <h2 id="detail-title" style="font-size: 18px; font-weight: 900;">エリア詳細</h2>
+<div id="page-area-detail" class="page animate-in fade-in slide-in-from-bottom-4 duration-500">
+  <!-- Header with Apple-style Back Button -->
+  <div class="flex items-center gap-4 mb-8">
+    <button onclick="renderAreaList()" class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-2xl font-light text-navy active:scale-90 transition-transform ring-1 ring-black/[0.02]">
+      ‹
+    </button>
+    <div>
+      <h2 id="detail-title" class="text-xl font-black text-navy tracking-tight leading-none">エリア詳細</h2>
+      <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Delivery Management</p>
+    </div>
   </div>
 
-  <div id="detail-list">
-    <!-- 動的に生成されます -->
+  <!-- Detailed Card List (Container) -->
+  <div id="detail-list" class="space-y-4 pb-20">
+    <!-- Items will be injected dynamically with the following structure:
+    <div class="bg-white rounded-3xl p-6 shadow-sm border-l-4 border-transparent has-[:checked]:border-green-500 transition-all ring-1 ring-black/[0.01]">
+      <div class="flex justify-between items-start gap-4 mb-6">
+        <div class="flex-1">
+          <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Target Address</div>
+          <div class="text-base font-black text-navy leading-tight mb-2">住所...</div>
+          <div class="text-xs text-gray-400 font-medium italic">メモ...</div>
+        </div>
+        <a href="googlemap..." class="flex items-center gap-1.5 px-3 py-2 bg-apple rounded-xl text-[10px] font-black text-blue-600 uppercase tracking-widest active:scale-95 transition-all">
+          <span>🗺️</span> MAP
+        </a>
+      </div>
+      <div class="flex items-center justify-between pt-4 border-t border-gray-50">
+        <label class="flex items-center gap-3 cursor-pointer group">
+          <input type="checkbox" class="w-6 h-6 rounded-lg accent-green-500 transition-all">
+          <span class="text-sm font-black text-navy group-active:scale-95 transition-transform">配布完了</span>
+        </label>
+        <div class="flex gap-2">
+          <span class="px-2 py-1 bg-blue-50 text-blue-600 text-[9px] font-black rounded-md uppercase tracking-tighter">Turnout 50%</span>
+        </div>
+      </div>
+    </div>
+    -->
   </div>
 </div>
+
+<style>
+  /* 
+     Tailwind で表現しきれない、または JavaScript 側で
+     動的に生成される要素に対する補足スタイル
+  */
+  #detail-list .detail-card {
+    background: white;
+    border-radius: 1.5rem; /* 24px */
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    border-left: 4px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #detail-list .detail-card.is-done {
+    border-left-color: #22c55e; /* green-500 */
+    background-color: #f0fdf4; /* green-50 */
+  }
+</style>

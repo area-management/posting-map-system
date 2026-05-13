@@ -1,23 +1,34 @@
-<style>
-  header {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-  }
-  .logo { font-size: 18px; font-weight: 900; color: var(--navy); }
-  .logo span { color: var(--blue); }
-  .sync-status { font-size: 10px; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: 4px; }
-  .sync-dot { width: 6px; height: 6px; background: currentColor; border-radius: 50%; animation: pulse 2s infinite; }
-  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-</style>
+<!-- Apple-style Glassmorphism Header Component -->
+<header class="sticky top-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-gray-100 safe-top">
+  <div class="px-6 py-4 flex justify-between items-center h-16 md:h-20">
+    
+    <!-- Brand Logo -->
+    <div class="flex flex-col">
+      <div class="text-xl font-black tracking-tighter leading-none flex items-center">
+        <span class="text-navy">POSTING</span>
+        <span class="text-blue-500 ml-0.5">MAP</span>
+      </div>
+      <p class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1.5 leading-none">Strategy Center</p>
+    </div>
 
-<header>
-  <div class="logo">POSTING <span>MAP</span></div>
-  <div class="sync-status">
-    <div class="sync-dot"></div>
-    <span id="header-sync-text">LIVE SYNC</span>
+    <!-- Sync Indicator -->
+    <div class="flex items-center gap-2.5 bg-green-50/50 px-3.5 py-1.5 rounded-full border border-green-100/50">
+      <div class="relative flex h-2 w-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+      </div>
+      <span id="header-sync-text" class="text-[10px] font-black text-green-700 uppercase tracking-widest">Live Sync</span>
+    </div>
+
   </div>
 </header>
+
+<style>
+  /* 
+     セーフエリアのパディングを補足（Tailwind クラスでも可能ですが
+     コンポーネントとしての独立性を保つために記述）
+  */
+  header.safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+</style>

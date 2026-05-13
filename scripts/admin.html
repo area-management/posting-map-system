@@ -1,624 +1,173 @@
-<div id="page-admin" class="page">
-  <!-- ヘッダー -->
-  <header class="admin-header">
-    <div class="admin-header-main">
-      <div class="admin-logo-box">
-        <div class="admin-logo-icon">📢</div>
-        <div>
-          <h1 class="admin-title">管理者ダッシュボード</h1>
-          <p class="admin-subtitle">戦況をリアルタイム分析</p>
+<div id="page-admin" class="page animate-in fade-in duration-500">
+  
+  <!-- Premium Admin Header -->
+  <header class="bg-white/80 backdrop-blur-xl border-b border-gray-100 safe-top sticky top-0 z-[100]">
+    <div class="px-6 py-4 flex justify-between items-center h-16 md:h-20">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 bg-navy rounded-xl flex items-center justify-center text-xl shadow-lg shadow-navy/20">📊</div>
+        <div class="flex flex-col">
+          <h1 id="branch-name" class="text-base font-black tracking-tight text-navy leading-none uppercase">Admin Dashboard</h1>
+          <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1">Real-time Command v2.0</p>
         </div>
       </div>
-      <button class="admin-menu-btn" onclick="toggleAdminMenu()">☰</button>
+      <button class="w-10 h-10 bg-apple rounded-full flex items-center justify-center active:scale-90 transition-transform" onclick="toggleAdminMenu()">
+        <span class="text-xl">☰</span>
+      </button>
     </div>
   </header>
 
-  <!-- ハンバーガーメニュー（3機能） -->
-  <div id="admin-menu-drawer" class="admin-drawer">
-    <div class="drawer-header">
-      <h3 style="font-weight: 900;">メニュー</h3>
-      <button class="close-btn" onclick="toggleAdminMenu()">×</button>
+  <!-- Navigation Drawer (Glassmorphism) -->
+  <div id="admin-menu-drawer" class="fixed top-0 right-[-280px] w-72 h-full bg-white/90 backdrop-blur-3xl z-[2001] shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] p-8 border-l border-white/20">
+    <div class="flex justify-between items-center mb-12">
+      <h3 class="text-sm font-black text-navy uppercase tracking-widest">Management</h3>
+      <button class="w-8 h-8 bg-apple rounded-full flex items-center justify-center text-lg leading-none" onclick="toggleAdminMenu()">×</button>
     </div>
-    <ul class="drawer-list">
-      <li onclick="toggleAreaSheet(); toggleAdminMenu();">
-        <span class="drawer-icon">📍</span> エリア別進捗を確認
+    <ul class="space-y-4">
+      <li onclick="toggleAreaSheet(); toggleAdminMenu();" class="flex items-center gap-4 p-4 bg-apple/50 rounded-2xl active:scale-95 transition-all cursor-pointer">
+        <span class="text-xl">📍</span>
+        <span class="text-sm font-black text-navy tracking-tight">エリア別進捗</span>
       </li>
-      <li onclick="runAdminTask('refreshAreaSummaryCache', '最新データに更新しますか？')">
-        <span class="drawer-icon">⚡</span> アプリ起動を高速化
+      <li onclick="runAdminTask('refreshAreaSummaryCache', '最新データに更新しますか？')" class="flex items-center gap-4 p-4 bg-apple/50 rounded-2xl active:scale-95 transition-all cursor-pointer">
+        <span class="text-xl">⚡</span>
+        <span class="text-sm font-black text-navy tracking-tight">キャッシュ更新</span>
       </li>
-      <li onclick="runAdminTask('forceStartBatch', 'バッチ処理を再開しますか？')">
-        <span class="drawer-icon">🔄</span> バッチ処理を強制再開
+      <li onclick="runAdminTask('forceStartBatch', 'バッチ処理を再開しますか？')" class="flex items-center gap-4 p-4 bg-apple/50 rounded-2xl active:scale-95 transition-all cursor-pointer">
+        <span class="text-xl">🔄</span>
+        <span class="text-sm font-black text-navy tracking-tight">バッチ再開</span>
       </li>
-      <li onclick="window.location.href='?mode=staff'" style="color: var(--red); border-top: 1px solid #eee; margin-top: 10px; padding-top: 20px;">
-        <span class="drawer-icon">🚪</span> スタッフ画面に戻る
+      <li onclick="window.location.href='?mode=staff'" class="flex items-center gap-4 p-4 border-t border-gray-100 mt-8 pt-8 text-red-500 active:scale-95 transition-all cursor-pointer">
+        <span class="text-xl">🚪</span>
+        <span class="text-sm font-black tracking-tight uppercase">Staff Mode</span>
       </li>
     </ul>
   </div>
 
-  <!-- エリア別進捗ボトムシート -->
-  <div id="admin-area-sheet" class="admin-bottom-sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header">
-      <h3 style="font-weight: 900;">📍 エリア別完了数</h3>
-      <button class="close-btn" onclick="toggleAreaSheet()">×</button>
+  <!-- Area Progress Bottom Sheet -->
+  <div id="admin-area-sheet" class="fixed bottom-[-85%] left-0 w-full h-[80%] bg-white/95 backdrop-blur-3xl z-[2002] rounded-t-[3rem] shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] p-8 border-t border-white/20 flex flex-col">
+    <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8"></div>
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h3 class="text-xl font-black text-navy tracking-tight">📍 エリア別完了数</h3>
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Regional Breakdown</p>
+      </div>
+      <button class="w-10 h-10 bg-apple rounded-full flex items-center justify-center text-xl" onclick="toggleAreaSheet()">×</button>
     </div>
-    <div id="admin-area-list" class="sheet-content">
-      <div class="loading-mini">読み込み中...</div>
+    <div id="admin-area-list" class="flex-1 overflow-y-auto hide-scrollbar space-y-4">
+      <!-- Dynamic list -->
     </div>
   </div>
 
-  <!-- オーバーレイ -->
-  <div id="admin-menu-overlay" class="admin-overlay" onclick="closeAllAdminUI()"></div>
+  <!-- Overlay -->
+  <div id="admin-menu-overlay" class="fixed inset-0 bg-black/10 backdrop-blur-sm z-[2000] hidden opacity-0 transition-opacity duration-500" onclick="closeAllAdminUI()"></div>
 
-  <!-- メイン進捗カード -->
-  <div class="admin-card main-progress-card">
-    <div class="progress-circle-container">
-      <svg class="progress-ring" viewBox="0 0 160 160">
-        <circle class="progress-ring-bg" stroke="#e0e0e0" stroke-width="12" fill="transparent" r="70" cx="80" cy="80"/>
-        <circle id="admin-progress-ring-fill" class="progress-ring-fill" stroke="#ffffff" stroke-width="12" stroke-linecap="round" fill="transparent" r="70" cx="80" cy="80"/>
-      </svg>
-      <div class="progress-text-box">
-        <span id="admin-progress-pct" class="progress-pct-big">0%</span>
-        <span class="progress-label">全体進捗率</span>
+  <!-- Main Content Scroll Area -->
+  <main class="p-6 space-y-6">
+    
+    <!-- Main Strategic Progress -->
+    <div class="bg-navy rounded-[2.5rem] p-8 text-white flex flex-col md:flex-row items-center gap-10 shadow-2xl shadow-navy/30 relative overflow-hidden ring-1 ring-white/10">
+      <div class="relative w-40 h-40 flex-shrink-0">
+        <svg class="transform -rotate-90 w-40 h-40" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="44" fill="transparent" stroke="white" stroke-opacity="0.1" stroke-width="10" />
+          <circle id="admin-progress-ring-fill" cx="50" cy="50" r="44" fill="transparent" stroke="white" stroke-width="10" stroke-dasharray="276.5" stroke-dashoffset="276.5" stroke-linecap="round" class="transition-all duration-1000" />
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span id="admin-progress-pct" class="text-4xl font-black tracking-tighter leading-none">0%</span>
+          <span class="text-[9px] font-black uppercase tracking-widest opacity-60 mt-2">Overall</span>
+        </div>
+      </div>
+      <div class="flex-1 z-10 text-center md:text-left">
+        <h2 class="text-2xl font-black tracking-tight leading-tight mb-4">目標達成まで<br><span id="admin-progress-msg-pct" class="text-4xl text-blue-400">0%</span> 完了！</h2>
+        <div class="flex items-center justify-center md:justify-start gap-4">
+          <div class="bg-white/10 px-4 py-2 rounded-full text-[10px] font-bold flex items-center gap-3">
+            <span>最終更新 <span id="admin-last-update" class="font-black text-blue-300">JUST NOW</span></span>
+            <button id="admin-refresh-btn" onclick="loadData()" class="active:scale-90 transition-transform">🔄</button>
+          </div>
+        </div>
+      </div>
+      <!-- Decorative Glow -->
+      <div class="absolute -right-20 -bottom-20 w-60 h-60 bg-blue-500 rounded-full blur-[100px] opacity-20"></div>
+    </div>
+
+    <!-- KPI Analytics Grid -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-white rounded-[2rem] p-6 shadow-sm ring-1 ring-black/[0.02]">
+        <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 italic">Global Areas</div>
+        <div class="flex items-baseline gap-1">
+          <span class="text-3xl font-black text-navy tracking-tighter">651</span>
+          <span class="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Units</span>
+        </div>
+      </div>
+      <div class="bg-white rounded-[2rem] p-6 shadow-sm ring-1 ring-black/[0.02] border-l-4 border-green-500/10">
+        <div class="text-[9px] font-black text-green-500 uppercase tracking-widest mb-2 italic">Units Secured</div>
+        <div class="flex items-baseline gap-1">
+          <span id="admin-done-count" class="text-3xl font-black text-green-500 tracking-tighter">0</span>
+          <span class="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Done</span>
+        </div>
+      </div>
+      <div class="bg-blue-500 rounded-[2rem] p-8 shadow-xl shadow-blue-500/20 col-span-2 flex items-center justify-between text-white">
+        <div>
+          <div class="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1 italic">Strategic Volume</div>
+          <div id="admin-today-count" class="text-4xl font-black tracking-tighter leading-none">0</div>
+        </div>
+        <div class="text-[10px] font-black bg-white/20 px-4 py-2 rounded-full uppercase tracking-[0.2em] backdrop-blur-md ring-1 ring-white/10">Cumulative</div>
       </div>
     </div>
-    <div class="progress-info-box">
-      <h2 class="progress-main-msg">全体の配布が<br class="pc-only"><span id="admin-progress-msg-pct" class="sp-block">0%</span>完了！</h2>
-      <p class="progress-sub-msg">最新の配布データを<br class="sp-only">リアルタイム分析中</p>
-      <div class="admin-refresh-box">
-        <span>最終更新 <span id="admin-last-update">今</span></span>
-        <button id="admin-refresh-btn" onclick="loadData()" class="refresh-btn">🔄</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- KPIグリッド -->
-  <div class="admin-kpi-grid">
-    <div class="admin-kpi-card">
-      <span class="kpi-label" style="color: #6c757d;">エリア全体</span>
-      <div class="kpi-val-row">
-        <span class="kpi-val">651</span>
-        <span class="kpi-unit">件</span>
+    <!-- Real-time Activity Feed -->
+    <section class="bg-white rounded-[2.5rem] p-8 shadow-sm ring-1 ring-black/[0.02]">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-sm font-black text-navy tracking-tight">⚡️ リアルタイム速報</h3>
+        <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest">Last 10 Actions</span>
       </div>
-    </div>
-    <div class="admin-kpi-card success">
-      <span class="kpi-label">完了エリア</span>
-      <div class="kpi-val-row">
-        <span id="admin-done-count" class="kpi-val">---</span>
-        <span class="kpi-unit">件</span>
+      <div class="bg-apple/50 rounded-2xl p-4 max-h-60 overflow-y-auto hide-scrollbar ring-1 ring-black/[0.01]">
+        <ul id="admin-activity-list" class="space-y-1">
+          <!-- Feed items -->
+        </ul>
       </div>
-    </div>
-    <!-- 下段フルワイド：本日の配布数 -->
-    <div class="admin-kpi-card" style="grid-column: span 2; background: #eef2ff;">
-      <span class="kpi-label" style="color: #4361ee;">全体の配布数（累計）</span>
-      <div class="kpi-val-row">
-        <span id="admin-today-count" class="kpi-val">---</span>
-        <span class="kpi-unit">枚</span>
+    </section>
+
+    <!-- Staff Performance Ranking -->
+    <section class="bg-white rounded-[2.5rem] p-8 shadow-sm ring-1 ring-black/[0.02]">
+      <div class="flex justify-between items-center mb-8">
+        <h3 class="text-sm font-black text-navy tracking-tight font-sans">👑 スタッフランキング</h3>
+        <a href="#" class="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em]">View All ›</a>
       </div>
-    </div>
-  </div>
+      <div id="admin-ranking-list" class="space-y-6">
+        <!-- Ranking items -->
+      </div>
+    </section>
 
-  <!-- リアルタイム速報 -->
-  <div class="admin-card">
-    <div class="card-header">
-      <h3 class="card-title">⚡️ リアルタイム速報</h3>
-      <span class="card-link" style="font-size: 11px; color: #888;">最新10件</span>
-    </div>
-    <div class="activity-feed-box">
-      <ul id="admin-activity-list" class="activity-list">
-        <div class="loading-mini">読み込み中...</div>
-      </ul>
-    </div>
-  </div>
+    <footer class="text-center py-10 opacity-30">
+      <p class="text-[10px] font-black text-navy uppercase tracking-[0.4em]">Strategic Monitoring Active</p>
+      <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-2">© 2026 Posting Strategy Command</p>
+    </footer>
 
-  <!-- スタッフランキング -->
-  <div class="admin-card">
-    <div class="card-header">
-      <h3 class="card-title">👑 スタッフ配布ランキング</h3>
-      <a href="#" class="card-link">もっと見る ›</a>
-    </div>
-    <div id="admin-ranking-list" class="admin-ranking-list">
-      <!-- GASから動的に流し込み -->
-      <div class="loading-mini">読み込み中...</div>
-    </div>
-  </div>
-
-  <div class="admin-footer-msg">
-    📈 リアルタイムで更新中！<br>
-    <span>チーム全体で目標達成を目指しましょう！</span>
-  </div>
+  </main>
 </div>
 
 <style>
-  /* ── Admin Dashboard Styles ── */
-  .admin-header {
-    background: #fff;
-    padding: 16px 20px;
-    border-radius: 20px;
-    margin: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border: none;
-  }
-  .admin-header-main {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
-  .admin-logo-box {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .admin-logo-icon {
-    font-size: 24px;
-    background: #2dc653;
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    color: white;
-  }
-  .admin-title {
-    font-size: 18px;
-    font-weight: 900;
-    color: #1a2533;
-  }
-  .admin-subtitle {
-    font-size: 12px;
-    color: #888;
-  }
-  .admin-menu-btn {
-    background: #f8f9fa;
-    border: 1px solid #eee;
-    font-size: 24px;
-    color: #666;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    cursor: pointer;
-  }
-
-  /* ドロワーメニュー（右） */
-  .admin-drawer {
-    position: fixed;
-    top: 0;
-    right: -280px;
-    width: 280px;
-    height: 100%;
-    background: white;
-    z-index: 2001;
-    box-shadow: -5px 0 20px rgba(0,0,0,0.1);
-    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 24px;
-  }
-  .admin-drawer.open { right: 0; }
-
-  /* ボトムシート（下） */
-  .admin-bottom-sheet {
-    position: fixed;
-    bottom: -80%;
-    left: 0;
-    width: 100%;
-    height: 80%;
-    background: white;
-    z-index: 2002;
-    border-radius: 32px 32px 0 0;
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
-    transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-  }
-  .admin-bottom-sheet.open { bottom: 0; }
-  .sheet-handle {
-    width: 40px; height: 5px; background: #e0e0e0;
-    border-radius: 3px; margin: 0 auto 15px;
-  }
-
-  .admin-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(4px);
-    z-index: 2000;
-    display: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .admin-overlay.show { display: block; opacity: 1; }
-
-  .drawer-header, .sheet-header {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;
-  }
-  .drawer-list { list-style: none; padding: 0; margin: 0; }
-  .drawer-list li {
-    padding: 16px 12px; font-weight: 700; border-radius: 12px;
-    cursor: pointer; display: flex; align-items: center; gap: 12px;
-  }
-  .drawer-list li:active { background: #f0f4f8; }
-  .drawer-icon { font-size: 20px; }
-  .close-btn {
-    border: none; background: #f0f4f8; width: 36px; height: 36px;
-    border-radius: 50%; font-size: 20px; color: #666;
-  }
-
-  /* エリアリスト内のアイテム */
-  .sheet-content { flex: 1; overflow-y: auto; padding-bottom: 40px; }
-  .admin-area-item {
-    padding: 16px 0; border-bottom: 1px solid #f0f0f0;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .admin-area-info { display: flex; justify-content: space-between; align-items: baseline; }
-  .admin-area-name { font-size: 15px; font-weight: 800; color: #1a2533; }
-  .admin-area-stats { font-size: 12px; font-weight: 700; color: #888; }
-  .admin-area-stats b { color: #2dc653; font-size: 14px; }
-  .admin-area-bar-bg { height: 6px; background: #f5f5f5; border-radius: 3px; overflow: hidden; }
-  .admin-area-bar-fill { height: 100%; background: #2dc653; transition: width 0.8s ease-out; }
-
-  .admin-card {
-    background: white;
-    margin: 16px;
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  }
-
-  .main-progress-card {
-    background: #2dc653; /* 戦略的な緑 */
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .progress-circle-container {
-    position: relative;
-    width: 160px;
-    height: 160px;
-  }
-  .progress-ring {
-    width: 100%;
-    height: 100%;
-    display: block;
-    transform: rotate(-90deg);
-    transform-origin: 50% 50%;
-  }
-  .progress-ring-fill {
-    transition: stroke-dashoffset 1s ease-out;
-  }
-  .progress-text-box {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .progress-pct-big {
-    font-size: 44px;
-    font-weight: 900;
-    line-height: 1;
-  }
-  .progress-label {
-    font-size: 11px;
-    opacity: 0.9;
-  }
-
-  .progress-info-box {
-    flex: 1;
-  }
-  .progress-main-msg {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    line-height: 1.3;
-  }
-  .progress-main-msg span {
-    font-size: 28px;
-    font-weight: 900;
-  }
-  .progress-sub-msg {
-    font-size: 13px;
-    opacity: 0.9;
-    margin-bottom: 12px;
-  }
-  .admin-refresh-box {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,0.2);
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-  }
-  .refresh-btn {
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    display: inline-block; /* 回転用 */
-    transition: transform 0.2s;
-  }
-  .refresh-btn:active {
-    transform: scale(0.9);
-  }
-  .refresh-btn.spinning {
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  .admin-kpi-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin: 0 16px 16px;
-  }
-  .admin-kpi-card {
-    background: white;
-    border-radius: 20px;
-    padding: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  }
-  .admin-kpi-card.alert { background: #fff5f5; }
-  .admin-kpi-card.success { background: #fffaf0; }
-
-  .kpi-label {
-    font-size: 12px;
-    font-weight: 700;
-    color: #e63946;
-  }
-  .success .kpi-label { color: #f4a261; }
-
-  .kpi-val-row {
-    margin: 8px 0;
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-  }
-  .kpi-val {
-    font-size: 32px;
-    font-weight: 900;
-    color: #1a2533;
-  }
-  .kpi-unit {
-    font-size: 14px;
-    color: #888;
-  }
-  .kpi-footer {
-    font-size: 10px;
-    font-weight: 700;
-    color: #e63946;
-  }
-  .success .kpi-footer { color: #f4a261; }
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-  .card-title {
-    font-size: 15px;
-    font-weight: 900;
-  }
-  .card-link {
-    font-size: 12px;
-    color: #2dc653;
-    text-decoration: none;
-    font-weight: 700;
-  }
-
-
-
-  .admin-ranking-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+  /* ── CSS Extensions for Dynamic Elements ── */
+  .admin-drawer.open { right: 0 !important; }
+  .admin-bottom-sheet.open { bottom: 0 !important; }
+  .admin-overlay.show { display: block !important; opacity: 1 !important; }
+  
+  /* Ranking Row Animation */
   .admin-rank-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 1rem;
   }
-  .admin-rank-icon {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-  }
-  .admin-rank-info {
-    flex: 1;
-  }
-  .admin-rank-top {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
-  }
-  .admin-rank-name {
-    font-size: 14px;
-    font-weight: 700;
-  }
-  .admin-rank-val {
-    font-size: 14px;
-    font-weight: 900;
-    color: #2dc653;
-  }
-  .admin-rank-val span {
-    font-size: 10px;
-    color: #888;
-    margin-left: 2px;
-  }
-  .admin-rank-bar-bg {
-    height: 6px;
-    background: #f0f0f0;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .admin-rank-bar-fill {
-    height: 100%;
-    background: #2dc653;
-    border-radius: 3px;
-    transition: width 1s ease-out;
-  }
+  .admin-rank-info { flex: 1; }
+  .admin-rank-bar-bg { height: 4px; background: #f1f5f9; border-radius: 999px; overflow: hidden; margin-top: 0.5rem; }
+  .admin-rank-bar-fill { height: 100%; background: #1a237e; border-radius: 999px; transition: width 1s ease-out; }
 
-  .admin-footer-msg {
-    text-align: center;
-    font-size: 14px;
-    font-weight: 700;
-    color: #495057;
-    margin: 24px 0 40px;
-    line-height: 1.6;
-  }
-  .admin-footer-msg span {
-    font-size: 11px;
-    font-weight: normal;
-    color: #888;
-  }
-
-  /* リアルタイム速報用スタイル */
-  .activity-feed-box {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 12px;
-    height: 200px;
-    overflow-y: auto;
-  }
-  .activity-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-  }
+  /* Activity Item */
   .activity-item {
-    font-size: 13px;
-    padding: 10px 0;
-    border-bottom: 1px dashed #e0e0e0;
+    font-size: 11px;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
     display: flex;
     align-items: center;
-    gap: 8px;
-    animation: slideDown 0.3s ease-out;
-  }
-  .activity-item:last-child {
-    border-bottom: none;
-  }
-  .activity-time {
-    color: #888;
-    font-size: 11px;
-    font-family: monospace;
-    min-width: 40px;
-  }
-  .activity-badge {
-    background: #2dc653;
-    color: white;
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: bold;
-    white-space: nowrap;
-  }
-  .activity-text {
-    color: #1a2533;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .activity-staff {
-    color: #666;
-    font-size: 11px;
-    white-space: nowrap;
-  }
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── Mobile Responsive Overrides ── */
-  .sp-only { display: none; }
-
-  @media (max-width: 480px) {
-    .sp-only { display: inline; }
-    .pc-only { display: none; }
-    
-    .admin-header {
-      padding: 12px 16px;
-      margin: 0 0 12px; /* モバイルではマージンを抑えてスッキリさせる */
-    }
-    .admin-logo-box {
-      gap: 10px;
-    }
-    .admin-logo-icon {
-      width: 38px;
-      height: 38px;
-      font-size: 20px;
-    }
-    .admin-title {
-      font-size: 16px;
-      line-height: 1.2;
-    }
-    .admin-subtitle {
-      font-size: 11px;
-      line-height: 1.3;
-      margin-top: 2px;
-    }
-
-    .admin-card {
-      margin: 12px;
-      padding: 16px;
-    }
-    .main-progress-card {
-      gap: 12px;
-      padding: 16px;
-    }
-    .progress-circle-container {
-      width: 100px !important;
-      height: 100px !important;
-    }
-    .progress-ring {
-      width: 100px !important;
-      height: 100px !important;
-    }
-    /* 不要になったスケール設定を削除 */
-    .progress-pct-big {
-      font-size: 28px;
-    }
-    .progress-label {
-      font-size: 9px;
-    }
-    .progress-main-msg {
-      font-size: 16px;
-    }
-    .progress-main-msg span {
-      font-size: 24px;
-    }
-
-    .kpi-val {
-      font-size: 24px;
-    }
-    .admin-rank-name {
-      font-size: 13px;
-    }
-    .admin-rank-val {
-      font-size: 13px;
-    }
-  }
-
-  /* ── Special Animations ── */
-  @keyframes glowPulse {
-    0% { filter: brightness(1); }
-    50% { filter: brightness(1.8); }
-    100% { filter: brightness(1); }
-  }
-  .glow-pulse {
-    animation: glowPulse 0.8s ease-out;
+    gap: 0.75rem;
   }
 </style>
