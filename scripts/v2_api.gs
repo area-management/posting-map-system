@@ -3,6 +3,15 @@
  */
 
 // =============================
+// ⓪ 基本設定
+// =============================
+const SPREADSHEET_ID = '1KuA5pN0ItODhwSJph-fwgj_U_ZyHrn9Osew92D99xBs';
+
+function getSS() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
+}
+
+// =============================
 // ① APIエントリポイント
 // =============================
 
@@ -83,7 +92,7 @@ function createJsonResponse(data) {
  * モバイルアプリ用：全体サマリー取得
  */
 function getAppData() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSS();
   const guideSheet = ss.getSheetByName(CONFIG.SHEET_GUIDE);
   let totalDistributed = 0;
 
@@ -141,7 +150,7 @@ function getAreaDetails(areaName) {
   const cached = cache.get("DETAILS_" + areaName);
   if (cached) return JSON.parse(cached);
 
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSS();
   const sheet = ss.getSheetByName(areaName);
   if (!sheet) return [];
 
@@ -177,7 +186,7 @@ function submitDistribution(
   isDone,
   staffId,
 ) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSS();
   const sheet = ss.getSheetByName(areaName);
   if (!sheet) throw new Error("Area not found");
 
@@ -203,7 +212,7 @@ function submitDistribution(
 
 function getRoster() {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(
+    const sheet = getSS().getSheetByName(
       CONFIG.SHEET_ROSTER,
     );
     if (!sheet) return [];
@@ -237,7 +246,7 @@ function registerStaff(lastName, firstName) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(30000);
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getSS();
     const sheet = ss.getSheetByName(CONFIG.SHEET_ROSTER);
 
     // ID発行ロジック
@@ -277,7 +286,7 @@ function registerStaff(lastName, firstName) {
 
 function isNotAdmin() {
   const user = Session.getActiveUser().getEmail();
-  const owner = SpreadsheetApp.getActiveSpreadsheet().getOwner().getEmail();
+  const owner = getSS().getOwner().getEmail();
   if (user !== owner) {
     SpreadsheetApp.getUi().alert("❌ 管理者専用です。");
     return true;
