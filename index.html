@@ -35,28 +35,29 @@
 </head>
 <body class="bg-apple-light dark:bg-apple-dark text-[#1d1d1f] dark:text-[#f5f5f7] font-sans antialiased overflow-hidden select-none transition-colors duration-500">
 
-  <!-- 1. GATEWAY (Shown only on GitHub Pages) -->
-  <div id="screen-gateway" class="fixed inset-0 z-[1000] bg-apple-light dark:bg-apple-dark hidden flex flex-col items-center justify-center p-10 text-center">
+  <!-- 1. GATEWAY / SPLASH -->
+  <div id="screen-gateway" class="fixed inset-0 z-[1000] bg-apple-light dark:bg-apple-dark flex flex-col items-center justify-center p-10 text-center">
     <div class="flex flex-col items-center justify-center mb-12">
       <div class="w-44 h-44 bg-apple-light dark:bg-[#1c1c1e] rounded-[3.8rem] shadow-neu-light dark:shadow-neu-dark flex items-center justify-center overflow-hidden mb-12 p-1 relative">
         <img src="https://area-management.github.io/posting-map-system/assets/icon180-v2.png?v=100" class="w-full h-full object-cover rounded-[3.5rem] z-10">
       </div>
-      <p class="text-gray-500 dark:text-gray-400 font-bold leading-relaxed text-sm">ホーム画面へ追加してから<br>アプリをご利用ください</p>
+      <p class="text-gray-500 dark:text-gray-400 font-bold leading-relaxed text-sm tracking-tight">POSTING MAP PRO<br><span class="text-[10px] opacity-60 uppercase tracking-widest">Mobile Strategy Portal</span></p>
     </div>
     <div class="w-full max-w-sm space-y-10">
       <div class="bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 shadow-neu-light dark:shadow-neu-dark border border-white/20">
-        <button onclick="forceStart()" class="btn-neu w-full bg-navy dark:bg-blue-600 text-white rounded-2xl py-6 text-xl font-black shadow-xl uppercase tracking-tighter">アプリを起動する</button>
+        <button onclick="startApp()" class="btn-neu w-full bg-navy dark:bg-blue-600 text-white rounded-2xl py-6 text-xl font-black shadow-xl uppercase tracking-tighter">アプリを起動する</button>
       </div>
       <p class="text-[10px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-[0.4em]">Operational Environment</p>
     </div>
   </div>
 
-  <!-- 2. LOADING (Shown during GAS initialization) -->
-  <div id="loading" class="fixed inset-0 z-[5000] flex flex-col items-center justify-center bg-apple-light dark:bg-apple-dark transition-opacity duration-700">
+  <!-- 2. LOADING -->
+  <div id="loading" class="fixed inset-0 z-[5000] flex flex-col items-center justify-center bg-apple-light dark:bg-apple-dark transition-opacity duration-700 hidden">
     <div class="w-12 h-12 border-[3px] border-navy/10 dark:border-white/10 border-t-navy dark:border-t-white rounded-full animate-spin"></div>
+    <p class="mt-6 text-[10px] font-black text-navy/40 dark:text-white/40 uppercase tracking-[0.3em] animate-pulse">Syncing Data...</p>
   </div>
 
-  <!-- 3. MAIN APP (Hidden until GAS ready) -->
+  <!-- 3. MAIN APP -->
   <div id="app" class="fixed inset-0 z-[2000] flex flex-col bg-apple-light dark:bg-apple-dark opacity-0 transition-opacity duration-1000 hidden">
     <header class="safe-top px-10 py-12 flex justify-between items-center">
       <h1 class="text-3xl font-black tracking-tighter text-navy dark:text-white leading-none">POSTING MAP</h1>
@@ -67,9 +68,12 @@
     </header>
 
     <main id="content" class="flex-1 overflow-y-auto hide-scrollbar px-10 space-y-12 pb-48">
+      <!-- AREAS PAGE -->
       <section id="page-areas" class="page space-y-10">
         <div id="area-list" class="space-y-8"></div>
       </section>
+
+      <!-- DETAIL PAGE -->
       <section id="page-detail" class="page hidden space-y-10">
         <div class="flex items-center gap-4 mb-4">
           <button onclick="switchPage('areas')" class="w-12 h-12 neu-flat rounded-2xl flex items-center justify-center text-xl">‹</button>
@@ -77,6 +81,8 @@
         </div>
         <div id="detail-list" class="space-y-10 pb-20"></div>
       </section>
+
+      <!-- AUTH/SETTINGS PAGE -->
       <section id="page-settings" class="page hidden space-y-10">
         <div class="neu-flat rounded-[3rem] p-12 text-center shadow-2xl">
           <h2 class="text-3xl font-black text-navy dark:text-white leading-tight mb-10">お名前を登録して<br>ください</h2>
@@ -107,23 +113,105 @@
     const $ = id => document.getElementById(id);
     let allPoints = [], areaSummary = [], roster = [];
     
-    // ユニバーサル環境判定
-    const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyA-VSYqJ_54FWoEhi3XfE5GXyN3WHUZrD2heRBrCrQOw2WTW4utXYk6nReMmjDJfOY/exec?page=app";
+    // GAS API CONFIG (JSON ONLY)
+    const API_URL = "https://script.google.com/macros/s/AKfycbyA-VSYqJ_54FWoEhi3XfE5GXyN3WHUZrD2heRBrCrQOw2WTW4utXYk6nReMmjDJfOY/exec";
 
-    function initEnvironment() {
-      if (isGAS) {
-        $('screen-gateway').classList.add('hidden');
-        $('app').classList.remove('hidden');
-        loadData();
-      } else {
-        $('screen-gateway').classList.remove('hidden');
-        $('app').classList.add('hidden');
-        $('loading').classList.add('hidden');
+    async function callApi(action, params = {}) {
+      const url = new URL(API_URL);
+      url.searchParams.append('action', action);
+      Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+      
+      try {
+        const response = await fetch(url.toString());
+        return await response.json();
+      } catch (err) {
+        console.error("API Error:", err);
+        return { success: false, message: err.toString() };
       }
     }
 
-    function forceStart() { window.location.href = GAS_URL; }
+    function startApp() {
+      $('screen-gateway').classList.add('hidden');
+      $('loading').classList.remove('hidden');
+      loadData();
+    }
+
+    async function loadData() {
+      const data = await callApi('getAppData');
+      if (data && data.areas) {
+        areaSummary = data.areas;
+        renderAreas();
+        updateStats();
+        
+        const saved = localStorage.getItem('user_info');
+        switchPage(saved ? 'areas' : 'settings');
+        
+        $('app').classList.remove('hidden');
+        setTimeout(() => {
+          $('app').classList.remove('opacity-0');
+          $('loading').classList.add('opacity-0');
+          setTimeout(() => $('loading').classList.add('hidden'), 700);
+        }, 500);
+      }
+    }
+
+    function renderAreas() {
+      $('area-list').innerHTML = areaSummary.map(s => `
+        <div class="neu-flat rounded-[2.5rem] p-10 flex items-center active:scale-[0.98] transition-all" onclick="openDetail('${s.name}')">
+          <div class="w-3 h-3 rounded-full mr-8 ${s.progress >= 100 ? 'bg-green-500 shadow-[0_0_15px_#22c55e]' : 'bg-rose-500'}"></div>
+          <div class="flex-1">
+            <div class="text-xl font-black text-navy dark:text-white tracking-tighter">${s.name}</div>
+            <div class="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-widest">${s.progress}% Completed</div>
+          </div>
+          <span class="text-gray-300 text-2xl font-light">›</span>
+        </div>`).join('');
+    }
+
+    async function openDetail(name) {
+      $('loading').classList.remove('hidden');
+      $('loading').classList.remove('opacity-0');
+      
+      const data = await callApi('getAreaDetails', { name: name });
+      if (data && data.points) {
+        $('detail-title').textContent = name;
+        $('detail-list').innerHTML = data.points.map((p, i) => `
+          <div class="neu-flat rounded-[2.5rem] p-10 space-y-8">
+            <div class="flex justify-between items-start gap-6">
+              <div class="text-xl font-black text-navy dark:text-white tracking-tight leading-tight">${p.address}</div>
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}" target="_blank" class="w-14 h-14 neu-flat rounded-2xl flex items-center justify-center text-2xl">📍</a>
+            </div>
+            <div class="flex flex-col gap-6">
+              <label class="neu-inset rounded-3xl p-6 flex items-center gap-5 cursor-pointer active:scale-[0.98] transition-all">
+                <input type="checkbox" class="w-8 h-8 rounded-xl accent-navy" ${p.isDone?'checked':''} onchange="updateRecord('${name}',${p.rowId},'done',this.checked)">
+                <span class="text-[10px] font-black uppercase tracking-widest text-navy dark:text-white">${p.isDone?'MISSION COMPLETED':'READY TO DEPLOY'}</span>
+              </label>
+            </div>
+          </div>`).join('');
+        switchPage('detail');
+      }
+      
+      $('loading').classList.add('opacity-0');
+      setTimeout(() => $('loading').classList.add('hidden'), 700);
+    }
+
+    async function updateRecord(areaName, rowId, field, val) {
+      const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+      const staffName = `${userInfo.last || ''} ${userInfo.first || ''}`.trim();
+      
+      // GETで簡易更新（GASの制約上、GETが最も確実）
+      const result = await callApi('submitDistribution', {
+        areaName: areaName,
+        rowId: rowId,
+        staffName: staffName,
+        isDone: val,
+        action: 'submitDistribution'
+      });
+      
+      if (result.success) {
+        // 成功したら進捗を再計算（簡易化のため再ロード）
+        loadData();
+      }
+    }
 
     function switchPage(id) {
       document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
@@ -133,60 +221,11 @@
       $('content').scrollTo(0,0);
     }
 
-    function renderData(data) {
-      if(!data || !data.points) return;
-      allPoints = data.points; areaSummary = data.summary || [];
-      $('area-list').innerHTML = areaSummary.map(s => `
-        <div class="neu-flat rounded-[2.5rem] p-10 flex items-center active:scale-[0.98] transition-all" onclick="openDetail('${s.name}')">
-          <div class="w-3 h-3 rounded-full mr-8 ${s.done/s.total >= 1 ? 'bg-green-500 shadow-[0_0_15px_#22c55e]' : 'bg-rose-500'}"></div>
-          <div class="flex-1">
-            <div class="text-xl font-black text-navy dark:text-white tracking-tighter">${s.name}</div>
-            <div class="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-widest">${s.done} / ${s.total} Units</div>
-          </div>
-          <span class="text-gray-300 text-2xl font-light">›</span>
-        </div>`).join('');
-      updateStats(); 
-      const saved = localStorage.getItem('user_info');
-      switchPage(saved ? 'areas' : 'settings');
-      setTimeout(() => { $('app').classList.remove('opacity-0'); $('loading').classList.add('opacity-0'); setTimeout(() => $('loading').classList.add('hidden'), 700); }, 1000);
-    }
-
-    function openDetail(name) {
-      $('detail-title').textContent = name;
-      const pts = allPoints.filter(p => p.area === name);
-      $('detail-list').innerHTML = pts.map((p, i) => `
-        <div class="neu-flat rounded-[2.5rem] p-10 space-y-8">
-          <div class="flex justify-between items-start gap-6">
-            <div class="text-xl font-black text-navy dark:text-white tracking-tight leading-tight">${p.address}</div>
-            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}" target="_blank" class="w-14 h-14 neu-flat rounded-2xl flex items-center justify-center text-2xl">📍</a>
-          </div>
-          <div class="flex flex-col gap-6">
-            <label class="neu-inset rounded-3xl p-6 flex items-center gap-5 cursor-pointer active:scale-[0.98] transition-all">
-              <input type="checkbox" class="w-8 h-8 rounded-xl accent-navy" ${p.status==='done'?'checked':''} onchange="updateRecord('${name}',${i},'done',this.checked)">
-              <span class="text-[10px] font-black uppercase tracking-widest text-navy dark:text-white">${p.status==='done'?'MISSION COMPLETED':'READY TO DEPLOY'}</span>
-            </label>
-            <div class="grid grid-cols-2 gap-6">
-              <select onchange="updateRecord('${name}',${i},'count',this.value)" class="neu-inset rounded-2xl p-5 text-xs font-black text-navy dark:text-white outline-none appearance-none">
-                <option value="">枚数</option>${[10,30,50,100,200].map(v=>`<option value="${v}" ${p.count==v?'selected':''}>${v}枚</option>`).join('')}
-              </select>
-              <select onchange="updateRecord('${name}',${i},'staff',this.value)" class="neu-inset rounded-2xl p-5 text-xs font-black text-navy dark:text-white outline-none appearance-none">
-                <option value="">担当者</option>${roster.map(r=>`<option value="${r}" ${p.staff==r?'selected':''}>${r}</option>`).join('')}
-              </select>
-            </div>
-          </div>
-        </div>`).join('');
-      switchPage('detail');
-    }
-
     function updateStats() {
-      const done = allPoints.filter(p => p.status === 'done').length;
-      const pct = allPoints.length ? Math.round(done / allPoints.length * 100) : 0;
-      $('header-pct').textContent = pct + '%';
-    }
-
-    function updateRecord(area, idx, field, val) {
-      if (!isGAS) return;
-      google.script.run.withSuccessHandler(loadData).updateRecord(area, idx, {[field]: val, done: field==='done'?val:undefined});
+      const total = areaSummary.length;
+      if (total === 0) return;
+      const avg = areaSummary.reduce((acc, cur) => acc + cur.progress, 0) / total;
+      $('header-pct').textContent = Math.round(avg) + '%';
     }
 
     function saveProfile() {
@@ -196,14 +235,11 @@
       switchPage('areas');
     }
 
-    function loadData() {
-      if (!isGAS) return;
-      $('loading').classList.remove('hidden');
-      google.script.run.withSuccessHandler(renderData).withFailureHandler(err => { alert('エラー: ' + err.message); $('loading').classList.add('hidden'); }).getAppData();
-      google.script.run.withSuccessHandler(list => { roster = list || []; }).getRoster();
-    }
-
-    window.onload = initEnvironment;
+    // 初回起動
+    window.onload = () => {
+      // PWAやGitHub Pages環境での初期化
+      console.log("POSTING MAP PRO initialized on GitHub Pages.");
+    };
   </script>
 </body>
 </html>

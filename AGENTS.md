@@ -15,3 +15,62 @@
 # UI・ブランド定義 (UI & Branding)
 - **設計思想**: モバイル優先。高齢者でも迷わない巨大な数字とシンプルUI。
 - **運用ルール**: URLはGitHub Pagesを使用し、アイコン変更時はキャッシュバスター（v=70）を更新する。
+
+# Frontend / Backend Architecture
+
+- Frontend:
+  GitHub Pages (PWA)
+
+- Backend:
+  Google Apps Script API
+
+- Communication:
+  fetch(JSON)
+
+- GAS role:
+  API only
+
+- GitHub role:
+  UI only
+
+- GAS and GitHub are independent systems.
+
+- Synchronization required:
+  API names
+  JSON structure
+  data schema
+
+- Synchronization NOT required:
+  HTML
+  CSS
+  UI code
+  GAS internal logic
+
+# Forbidden
+
+- HtmlService
+- GAS UI rendering
+- script.google.com redirects
+- meta refresh redirect
+- window.location.href to GAS
+
+# GAS Response Rule
+
+Always return JSON only.
+
+Example:
+
+return ContentService
+  .createTextOutput(JSON.stringify(data))
+  .setMimeType(ContentService.MimeType.JSON);
+
+# Deployment Rule
+
+Frontend changes:
+git push origin main
+
+GAS changes:
+clasp push
+clasp deploy
+
+GitHub and GAS deploy separately.
