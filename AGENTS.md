@@ -75,6 +75,20 @@ clasp deploy
 
 GitHub and GAS deploy separately.
 
+AI may prepare commits locally (git add, git commit).
+
+Human executes:
+- git push
+- production deploy
+- release operations
+
+Never push (Strictly enforced for AI):
+- backup files
+- old files
+- experimental files
+- temporary files
+
+
 # Stability Rules
 
 Do NOT refactor working API logic unless explicitly instructed.

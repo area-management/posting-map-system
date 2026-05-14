@@ -20,7 +20,12 @@ dist/
 *.csv
 *.zip
 *.pdf
-scripts/*.bak
+# Backups
+*.bak
+*.old
+*_backup*
+gas_v2_backup.gs.txt
+
 
 # IDE/Local settings
 .vscode/
