@@ -33,9 +33,9 @@
     .btn-neu { @apply transition-all duration-300 active:scale-95; }
   </style>
 </head>
-<body class="bg-apple-light dark:bg-apple-dark text-[#1d1d1f] dark:text-[#f5f5f7] font-sans antialiased overflow-hidden select-none">
+<body class="bg-apple-light dark:bg-apple-dark text-[#1d1d1f] dark:text-[#f5f5f7] font-sans antialiased overflow-hidden select-none transition-colors duration-500">
 
-  <!-- 1. GATEWAY SCREEN (Shown on GitHub) -->
+  <!-- 1. GATEWAY (Shown only on GitHub Pages) -->
   <div id="screen-gateway" class="fixed inset-0 z-[1000] bg-apple-light dark:bg-apple-dark hidden flex flex-col items-center justify-center pt-32 pb-40 px-10 text-center">
     <div class="fixed top-0 left-0 right-0 px-10 py-10 flex justify-between items-center z-[1001]">
       <h1 class="text-3xl font-black tracking-tighter text-navy dark:text-white leading-none">POSTING MAP</h1>
@@ -58,18 +58,18 @@
     </div>
   </div>
 
-  <!-- 2. LOADING OVERLAY -->
+  <!-- 2. LOADING (Shown during GAS initialization) -->
   <div id="loading" class="fixed inset-0 z-[5000] flex flex-col items-center justify-center bg-apple-light dark:bg-apple-dark transition-opacity duration-700">
     <div class="w-12 h-12 border-[3px] border-navy/10 dark:border-white/10 border-t-navy dark:border-t-white rounded-full animate-spin"></div>
   </div>
 
-  <!-- 3. MAIN APP (Shown on GAS) -->
+  <!-- 3. MAIN APP (The Functional Engine) -->
   <div id="app" class="flex flex-col h-screen overflow-hidden opacity-0 transition-opacity duration-1000 hidden">
     <header class="safe-top px-10 py-10 flex justify-between items-center">
       <h1 class="text-3xl font-black tracking-tighter text-navy dark:text-white leading-none">POSTING MAP</h1>
-      <div class="bg-white/60 dark:bg-white/10 px-5 py-2.5 rounded-full flex items-center gap-4 shadow-neu-inset-light dark:shadow-neu-inset-dark">
-        <div id="sync-status" class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></div>
-        <span id="header-pct" class="text-xs font-black text-navy dark:text-blue-400 tracking-tighter">0%</span>
+      <div class="bg-white/60 dark:bg-white/10 px-5 py-2.5 rounded-full flex items-center gap-4 shadow-neu-inset-light dark:shadow-neu-inset-dark text-xs font-black">
+        <div id="sync-status" class="w-2 h-2 bg-green-500 rounded-full"></div>
+        <span id="header-pct">0%</span>
       </div>
     </header>
 
@@ -114,9 +114,9 @@
     const $ = id => document.getElementById(id);
     let allPoints = [], areaSummary = [], roster = [];
     
-    // 環境判定
-    const isGAS = window.location.hostname.includes('google.com') || window.location.href.includes('?page=');
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxo7bpjbh85YvTcJfBw7UB-IlykdifBzPPuvMrWrK44/dev?page=app";
+    // ユニバーサル環境判定
+    const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyA-VSYqJ_54FWoEhi3XfE5GXyN3WHUZrD2heRBrCrQOw2WTW4utXYk6nReMmjDJfOY/exec?page=app";
 
     function initEnvironment() {
       if (isGAS) {
@@ -134,7 +134,8 @@
 
     function switchPage(id) {
       document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-      $(id === 'detail' ? 'page-detail' : (id === 'settings' ? 'page-settings' : 'page-areas')).classList.remove('hidden');
+      const target = $(id === 'detail' ? 'page-detail' : (id === 'settings' ? 'page-settings' : 'page-areas'));
+      if(target) target.classList.remove('hidden');
       document.querySelectorAll('.nav-btn').forEach((b, i) => { b.style.opacity = (id === 'areas' && i === 0) || (id === 'settings' && i === 1) ? '1' : '0.3'; });
       $('content').scrollTo(0,0);
     }
