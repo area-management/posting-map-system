@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ADMIN DASHBOARD v2.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="apple-touch-icon" href="https://area-management.github.io/posting-map-system/assets/icon-manager-180.png">
+  <link rel="apple-touch-icon" href="https://area-management.github.io/posting-map-system/assets/icon-admin-panel-180.png?v=101">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=Noto+Sans+JP:wght@400;900&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
@@ -26,6 +26,8 @@
     .safe-top { padding-top: env(safe-area-inset-top); }
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .page { display: block; opacity: 1; transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+    .page.hidden { display: none; opacity: 0; }
     .neu-flat { @apply bg-white dark:bg-[#1c1c1e] shadow-[8px_8px_20px_rgba(0,0,0,0.05)] dark:shadow-[8px_8px_20px_rgba(0,0,0,0.4)]; }
     .neu-inset { @apply bg-gray-50 dark:bg-black/20 shadow-[inset_4px_4px_10px_rgba(0,0,0,0.05)] dark:shadow-[inset_4px_4px_10px_rgba(0,0,0,0.5)]; }
     .btn-neu { @apply transition-all duration-300 active:scale-95; }
@@ -37,7 +39,7 @@
   <div id="screen-gateway" class="fixed inset-0 z-[1000] bg-apple-light dark:bg-apple-dark flex flex-col items-center justify-center p-10 text-center">
     <div class="flex flex-col items-center justify-center mb-6 mt-0">
       <div class="w-44 h-44 bg-apple-light dark:bg-[#1c1c1e] rounded-[3.8rem] shadow-neu-light dark:shadow-neu-dark flex items-center justify-center overflow-hidden mb-6 p-1 relative">
-        <img src="https://area-management.github.io/posting-map-system/assets/icon-manager-180.png" class="w-full h-full object-cover rounded-[3.5rem] z-10">
+        <img src="https://area-management.github.io/posting-map-system/assets/icon-admin-panel-180.png?v=101" class="w-full h-full object-cover rounded-[3.5rem] z-10">
       </div>
       <p class="text-gray-500 dark:text-gray-400 font-bold leading-relaxed text-sm">管理者専用の管理画面です<br>ホーム画面に追加してご利用ください</p>
     </div>
@@ -55,7 +57,7 @@
     <p class="mt-6 text-[10px] font-black text-navy/40 dark:text-white/40 uppercase tracking-[0.3em] animate-pulse">Syncing Admin Data...</p>
   </div>
 
-  <!-- 3. MAIN ADMIN APP (Placeholder for now) -->
+  <!-- 3. MAIN ADMIN APP -->
   <div id="app" class="fixed inset-0 z-[2000] flex flex-col bg-apple-light dark:bg-apple-dark opacity-0 transition-opacity duration-1000 hidden">
     <header class="safe-top px-10 py-12 flex justify-between items-center">
       <h1 class="text-3xl font-black tracking-tighter text-navy dark:text-white leading-none">ADMIN DASHBOARD</h1>
