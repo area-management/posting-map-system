@@ -1,15 +1,9 @@
-<!-- Next-Gen Glass Header -->
-<header id="header" class="bg-apple-light/70 dark:bg-apple-dark/70 backdrop-blur-3xl border-b border-white/10 safe-top z-[100] sticky top-0">
-  <div class="px-8 py-6 flex justify-between items-center h-20 md:h-24">
-    <div class="flex items-center gap-4">
-      <div class="w-10 h-10 bg-white/50 dark:bg-white/5 rounded-2xl flex items-center justify-center shadow-neu-light dark:shadow-neu-dark text-xl animate-fade-in">🗺️</div>
-      <div class="flex flex-col animate-fade-in">
-        <div id="branch-label" class="text-[9px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-[0.2em] leading-none">Command Center</div>
-        <div class="text-xl font-black tracking-tighter text-navy dark:text-blue-400 mt-1">POSTING MAP NEXT</div>
-      </div>
-    </div>
-    <div id="header-progress-container" class="bg-white/50 dark:bg-white/5 text-navy dark:text-blue-400 px-4 py-2 rounded-full text-xs font-black tracking-tighter shadow-neu-inset-light dark:shadow-neu-inset-dark animate-fade-in">
-      <span id="sync-pct">0%</span>
-    </div>
+<header class="safe-top px-10 py-10 flex justify-between items-center transition-opacity duration-300">
+  <div>
+    <h1 class="text-3xl font-black tracking-tighter text-navy dark:text-white leading-none">POSTING MAP</h1>
+  </div>
+  <div class="bg-white/60 dark:bg-white/10 px-5 py-2.5 rounded-full flex items-center gap-4 shadow-neu-inset-light dark:shadow-neu-inset-dark">
+    <div id="sync-status" class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></div>
+    <span id="header-pct" class="text-xs font-black text-navy dark:text-blue-400 tracking-tighter">0%</span>
   </div>
 </header>

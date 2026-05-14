@@ -16,30 +16,45 @@ function getSS() {
 // ① APIエントリポイント
 // =============================
 
-// GETリクエスト：データの取得
+/**
+ * GETリクエスト：画面表示またはデータの取得
+ */
 function doGet(e) {
+  const page = e.parameter.page;
   const action = e.parameter.action;
-  let response;
 
+  // 1. 画面表示（HTML）の処理
+  if (page || !action) {
+    const target = page || 'app';
+    const title = target === 'manager' ? "STRATEGY DASHBOARD" : "POSTING MAP";
+    try {
+      return HtmlService.createTemplateFromFile(target)
+        .evaluate()
+        .setTitle(title)
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    } catch (err) {
+      return HtmlService.createHtmlOutput(`Error: Page [${target}] not found.`);
+    }
+  }
+
+  // 2. API（JSON）の処理
+  let response;
   try {
     switch (action) {
       case 'getAppData':
         response = getAppData();
         break;
-      case 'getAreaDetails':
-        response = getAreaDetails(e.parameter.areaName);
-        break;
       case 'getRoster':
         response = getRoster();
         break;
       default:
-        response = { success: false, message: 'Invalid GET action: ' + action };
+        response = { success: false, message: 'Invalid action: ' + action };
     }
   } catch (err) {
     response = { success: false, message: err.toString() };
   }
-
-  return createJsonResponse(response);
+  return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
 }
 
 // POSTリクエスト：データの登録・更新

@@ -1,19 +1,12 @@
-<!-- Next-Gen Floating Nav -->
-<nav class="fixed bottom-10 left-10 right-10 bg-white/60 dark:bg-white/5 backdrop-blur-3xl rounded-[3rem] shadow-neu-light dark:shadow-neu-dark border border-white/20 flex justify-around items-center p-3 z-[200]">
-  <button id="nav-howto" onclick="switchPage('guide', this)" class="nav-item flex flex-col items-center justify-center w-20 py-3 transition-all group active:scale-90">
-    <span class="text-3xl mb-1 transition-all group-active:scale-90 group-[.active]:drop-shadow-[0_0_8px_rgba(26,35,126,0.3)]">📋</span>
-    <span class="text-[9px] font-black uppercase tracking-widest group-[.active]:text-navy dark:group-[.active]:text-blue-400 opacity-40 group-[.active]:opacity-100">Guide</span>
-  </button>
-  <button id="nav-area" onclick="switchPage('area', this)" class="nav-item flex flex-col items-center justify-center w-20 py-3 transition-all group active:scale-90">
-    <span class="text-3xl mb-1 transition-all group-active:scale-90 group-[.active]:drop-shadow-[0_0_8px_rgba(26,35,126,0.3)]">📍</span>
-    <span class="text-[9px] font-black uppercase tracking-widest group-[.active]:text-navy dark:group-[.active]:text-blue-400 opacity-40 group-[.active]:opacity-100">Areas</span>
-  </button>
-  <button id="nav-settings" onclick="switchPage('settings', this)" class="nav-item flex flex-col items-center justify-center w-20 py-3 transition-all group active:scale-90">
-    <span class="text-3xl mb-1 transition-all group-active:scale-90 group-[.active]:drop-shadow-[0_0_8px_rgba(26,35,126,0.3)]">⚙️</span>
-    <span class="text-[9px] font-black uppercase tracking-widest group-[.active]:text-navy dark:group-[.active]:text-blue-400 opacity-40 group-[.active]:opacity-100">Settings</span>
-  </button>
+<nav class="fixed bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[4000]">
+  <div class="bg-white/60 dark:bg-black/60 backdrop-blur-3xl rounded-[3.5rem] p-4 shadow-neu-light dark:shadow-neu-dark border border-white/20 flex justify-around items-center h-28 relative">
+    <button onclick="switchPage('areas')" class="nav-btn flex flex-col items-center gap-2 flex-1 transition-all">
+      <div class="text-2xl">📍</div>
+      <span class="text-[9px] font-black uppercase tracking-widest text-navy dark:text-white">Areas</span>
+    </button>
+    <button onclick="switchPage('settings')" class="nav-btn flex flex-col items-center gap-2 flex-1 transition-all">
+      <div class="text-2xl">⚙️</div>
+      <span class="text-[9px] font-black uppercase tracking-widest text-navy dark:text-white">Auth</span>
+    </button>
+  </div>
 </nav>
-
-<style>
-  .nav-item.active { @apply opacity-100; }
-</style>

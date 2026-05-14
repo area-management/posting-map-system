@@ -24,16 +24,51 @@ function getDashboardData() {
   if (cached) {
     try {
       const data = JSON.parse(cached);
-      // PropertiesServiceから読み込んだ場合はCacheServiceに書き戻して次回を高速化
       cache.put("AREA_SUMMARY_FAST_CACHE", cached, 600);
       return data;
-    } catch (e) {
-      // キャッシュ破損時は再計算へ
-    }
+    } catch (e) {}
   }
-
-  // キャッシュがない場合は初回のみ計算
   return refreshAreaSummaryCache();
+}
+
+/**
+ * モバイルアプリ用：全データ一括取得（住所リスト + サマリー）
+ */
+function getAppData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const summaryData = getDashboardData();
+  const allPoints = [];
+  
+  const exclude = [
+    CONFIG.SHEET_GUIDE, CONFIG.SHEET_ROSTER, CONFIG.SHEET_TEMPLATE,
+    CONFIG.SHEET_POSTAL, CONFIG.SHEET_DISTRICT, CONFIG.SHEET_MASTER_EXPORT,
+    CONFIG.SHEET_REPORT, CONFIG.SHEET_MANUAL, CONFIG.SHEET_SYSTEM_CACHE
+  ];
+
+  const sheets = ss.getSheets().filter(s => !exclude.includes(s.getName()) && !s.isSheetHidden());
+  
+  sheets.forEach(s => {
+    const name = s.getName();
+    const vals = s.getRange(2, 1, s.getLastRow() - 1, 7).getValues();
+    vals.forEach((row, i) => {
+      if (row[0]) { // 住所がある場合
+        allPoints.push({
+          area: name,
+          idx: i,
+          address: row[0],
+          status: row[3] === true ? 'done' : 'ready',
+          count: row[5],
+          staff: row[6]
+        });
+      }
+    });
+  });
+
+  return {
+    points: allPoints,
+    summary: summaryData.summary,
+    stats: summaryData.stats
+  };
 }
 
 /**
