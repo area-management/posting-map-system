@@ -123,11 +123,19 @@
       Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
       
       try {
-        const response = await fetch(url.toString());
-        return await response.json();
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          mode: 'cors',
+          cache: 'no-cache',
+          redirect: 'follow'
+        });
+        if (!response.ok) throw new Error("Network response was not ok: " + response.statusText);
+        const data = await response.json();
+        console.log("API Response:", data);
+        return data;
       } catch (err) {
         console.error("API Error:", err);
-        return { success: false, message: err.toString() };
+        return { success: false, message: "通信に失敗しました: " + err.message };
       }
     }
 
@@ -138,21 +146,29 @@
     }
 
     async function loadData() {
-      const data = await callApi('getAppData');
-      if (data && data.areas) {
-        areaSummary = data.areas;
-        renderAreas();
-        updateStats();
-        
-        const saved = localStorage.getItem('user_info');
-        switchPage(saved ? 'areas' : 'settings');
-        
-        $('app').classList.remove('hidden');
-        setTimeout(() => {
-          $('app').classList.remove('opacity-0');
-          $('loading').classList.add('opacity-0');
-          setTimeout(() => $('loading').classList.add('hidden'), 700);
-        }, 500);
+      try {
+        const data = await callApi('getAppData');
+        if (data && data.success) {
+          areaSummary = data.areas;
+          renderAreas();
+          updateStats();
+          
+          const saved = localStorage.getItem('user_info');
+          switchPage(saved ? 'areas' : 'settings');
+          
+          $('app').classList.remove('hidden');
+          setTimeout(() => {
+            $('app').classList.remove('opacity-0');
+            $('loading').classList.add('opacity-0');
+            setTimeout(() => $('loading').classList.add('hidden'), 700);
+          }, 500);
+        } else {
+          throw new Error(data ? data.message : "データが空です");
+        }
+      } catch (err) {
+        alert("起動エラー\n" + err.message + "\n\nGASのデプロイ設定が「全員（Anyone）」になっているか確認してください。");
+        $('loading').classList.add('hidden');
+        $('screen-gateway').classList.remove('hidden');
       }
     }
 
