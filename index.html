@@ -64,7 +64,8 @@
 <body class="bg-[#000000] text-white font-sans antialiased overflow-hidden select-none transition-colors duration-500">
 
   <!-- 1. GATEWAY / SPLASH -->
-  <div id="screen-gateway" class="fixed inset-0 z-[1000] bg-[#000000] flex flex-col items-center justify-center p-10 text-center">
+  <!-- 1. SPLASH / GATEWAY (最前面に配置) -->
+  <div id="screen-gateway" class="fixed inset-0 z-[10000] bg-[#000000] flex flex-col items-center justify-center p-10 text-center">
     <div class="flex flex-col items-center justify-center mb-6 mt-0">
       <div class="w-44 h-44 bg-white/5 backdrop-blur-2xl rounded-[3.8rem] border border-white/10 flex items-center justify-center overflow-hidden mb-6 p-1 relative shadow-2xl">
         <img src="https://area-management.github.io/posting-map-system/assets/icon180-v2.png?v=200" class="w-full h-full object-cover rounded-[3.5rem] z-10">
@@ -81,8 +82,8 @@
     </div>
   </div>
 
-  <!-- 2. LOADING -->
-  <div id="loading" class="fixed inset-0 z-[5000] flex flex-col items-center justify-center bg-[#000000] transition-opacity duration-700 hidden">
+  <!-- 2. LOADING (通常は隠す) -->
+  <div id="loading" class="fixed inset-0 z-[15000] flex flex-col items-center justify-center bg-[#000000] transition-opacity duration-700 hidden pointer-events-none">
     <div class="w-12 h-12 border-[3px] border-white/10 border-t-[#2563eb] rounded-full animate-spin"></div>
     <p class="mt-6 text-[10px] font-black text-white/40 uppercase tracking-[0.3em] animate-pulse">Syncing Data...</p>
   </div>
@@ -129,7 +130,7 @@
     </nav>
   </div>
 
-  <div id="modal-container" class="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-8 opacity-0 pointer-events-none transition-opacity duration-300">
+  <div id="modal-container" class="fixed inset-0 z-[20000] flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-300">
     <div class="bg-[#1c1c1e] w-full max-w-[320px] rounded-[2.5rem] p-10 border border-white/5 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-box">
       <div class="flex flex-col items-center text-center">
         <div class="w-16 h-16 bg-[#2563eb]/10 rounded-full flex items-center justify-center mb-8">
