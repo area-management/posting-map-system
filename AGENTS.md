@@ -109,7 +109,14 @@ Priority:
 
 Avoid breaking existing frontend communication.
 
-# UI DESIGN SYSTEM — POSTING MAP
+## UI DESIGN SYSTEM — POSTING MAP
+
+## Splash Screen Golden Ratio (Mandatory)
+* Vertical Rhythm: Use consistent `mb-6` (24px) or `gap-6` between Icon, Text, and Button.
+* Top-Weighted Balance: Apply `pb-24` (96px) to the parent container to lift content upwards.
+* Structural Rule: Avoid nested margins. Maintain a single linear flex container.
+* Footer Style: 2-line uppercase tracking (e.g., OPERATIONAL / ENVIRONMENT).
+* Layout: `flex flex-col items-center justify-center text-center`.
 
 ## Core Style
 * Background: Pure black (#000000)
