@@ -64,13 +64,12 @@
 <body class="bg-[#000000] text-white font-sans antialiased overflow-hidden select-none transition-colors duration-500">
 
   <!-- 1. GATEWAY / SPLASH -->
-  <!-- 1. SPLASH / GATEWAY (最前面に配置) -->
-  <div id="screen-gateway" class="fixed inset-0 z-[10000] bg-[#000000] flex flex-col items-center justify-center p-10 text-center">
+  <div id="screen-gateway" class="fixed inset-0 z-[1000] bg-[#000000] flex flex-col items-center justify-center p-10 text-center">
     <div class="flex flex-col items-center justify-center mb-6 mt-0">
       <div class="w-44 h-44 bg-white/5 backdrop-blur-2xl rounded-[3.8rem] border border-white/10 flex items-center justify-center overflow-hidden mb-6 p-1 relative shadow-2xl">
         <img src="https://area-management.github.io/posting-map-system/assets/icon180-v2.png?v=200" class="w-full h-full object-cover rounded-[3.5rem] z-10">
       </div>
-      <div class="text-center">
+      <div class="mb-12 text-center">
         <h2 style="color: rgba(255,255,255,0.72);" class="text-base font-black leading-tight">ホーム画面へ追加してから</h2>
         <p style="color: rgba(255,255,255,0.4);" class="text-[11px] font-medium mt-2">アプリをご利用ください</p>
       </div>
@@ -79,11 +78,12 @@
       <div class="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
         <button onclick="startApp()" class="btn-neu w-full bg-[#2563eb] text-white rounded-2xl py-6 text-lg font-black shadow-xl uppercase tracking-tighter">アプリを起動する</button>
       </div>
+      <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] pt-4">Operational Environment</p>
     </div>
   </div>
 
-  <!-- 2. LOADING (通常は隠す) -->
-  <div id="loading" class="fixed inset-0 z-[15000] flex flex-col items-center justify-center bg-[#000000] transition-opacity duration-700 hidden pointer-events-none">
+  <!-- 2. LOADING -->
+  <div id="loading" class="fixed inset-0 z-[5000] flex flex-col items-center justify-center bg-[#000000] transition-opacity duration-700 hidden">
     <div class="w-12 h-12 border-[3px] border-white/10 border-t-[#2563eb] rounded-full animate-spin"></div>
     <p class="mt-6 text-[10px] font-black text-white/40 uppercase tracking-[0.3em] animate-pulse">Syncing Data...</p>
   </div>
@@ -122,25 +122,12 @@
     </main>
 
     <!-- 下ナビ：90pxに調整 -->
-    <nav id="bottom-nav" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[4000] hidden">
+    <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[4000]">
       <div class="bg-white/5 backdrop-blur-3xl rounded-[2.5rem] p-2 border border-white/10 flex justify-around items-center h-[90px] relative shadow-2xl">
         <button onclick="switchPage('areas')" class="nav-btn flex flex-col items-center gap-1 flex-1 transition-all"><div class="text-xl">📍</div><span class="text-[10px] font-black uppercase tracking-widest text-gray-500">地区</span></button>
         <button onclick="switchPage('settings')" class="nav-btn flex flex-col items-center gap-1 flex-1 transition-all"><div class="text-xl">👤</div><span class="text-[10px] font-black uppercase tracking-widest text-gray-500">設定</span></button>
       </div>
     </nav>
-  </div>
-
-  <div id="modal-container" class="fixed inset-0 z-[20000] flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-300">
-    <div class="bg-[#1c1c1e] w-full max-w-[320px] rounded-[2.5rem] p-10 border border-white/5 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-box">
-      <div class="flex flex-col items-center text-center">
-        <div class="w-16 h-16 bg-[#2563eb]/10 rounded-full flex items-center justify-center mb-8">
-          <div class="w-8 h-8 rounded-full border-2 border-[#2563eb] flex items-center justify-center text-[#2563eb] font-black text-xl italic">i</div>
-        </div>
-        <h3 id="modal-title" class="text-xl font-black text-white tracking-tighter mb-3">姓名を入力してください</h3>
-        <p id="modal-msg" class="text-xs font-medium text-gray-500 leading-relaxed mb-10 px-4">名前は必須項目です。</p>
-        <button onclick="closeModal()" class="btn-neu w-full bg-[#2563eb] text-white py-5 rounded-[1.4rem] text-sm font-black shadow-lg shadow-blue-900/20">閉じる</button>
-      </div>
-    </div>
   </div>
 
   <script>
@@ -162,23 +149,6 @@
       document.querySelectorAll('.pressed-primary, .pressed-secondary, .pressed-nav').forEach(el => {
         el.classList.remove('pressed-primary', 'pressed-secondary', 'pressed-nav');
       });
-    }
-
-    // プレミアム・モーダル制御
-    function showModal(title, msg) {
-      $('modal-title').innerHTML = title;
-      $('modal-msg').innerHTML = msg;
-      const container = $('modal-container');
-      const box = $('modal-box');
-      container.classList.remove('opacity-0', 'pointer-events-none');
-      setTimeout(() => box.classList.remove('scale-95'), 10);
-    }
-
-    function closeModal() {
-      const container = $('modal-container');
-      const box = $('modal-box');
-      box.classList.add('scale-95');
-      container.classList.add('opacity-0', 'pointer-events-none');
     }
     
     // GAS API CONFIG (JSON ONLY)
@@ -209,6 +179,7 @@
         return data;
       } catch (err) {
         console.error("API Connection Error:", err);
+        alert("通信エラーが発生しました。\n内容: " + err.message);
         throw err;
       }
     }
@@ -228,13 +199,7 @@
           updateStats();
           
           const saved = localStorage.getItem('user_info');
-          if (saved) {
-            $('bottom-nav').classList.remove('hidden');
-            switchPage('areas');
-          } else {
-            $('bottom-nav').classList.add('hidden');
-            switchPage('settings');
-          }
+          switchPage(saved ? 'areas' : 'settings');
           
           $('app').classList.remove('hidden');
           setTimeout(() => {
@@ -248,7 +213,7 @@
       } catch (err) {
         console.error("Startup Error:", err);
         $('loading').classList.add('hidden');
-        showModal("通信エラー", "理由: " + err.message);
+        $('screen-gateway').classList.remove('hidden');
       }
     }
 
@@ -257,22 +222,10 @@
         $('area-list').innerHTML = '<p class="text-center text-gray-500 py-20 font-bold">データがありません。<br>一括作成を実行してください。</p>';
         return;
       }
-
-      // 業務に関係ないカードを徹底除外（説明文やガイドを排除）
-      $('area-list').innerHTML = areaSummary
-        .filter(s => {
-          const n = String(s.name || "");
-          // 以下のいずれかに該当すれば除外:
-          // 1. キーワードが含まれる
-          // 2. 文字数が20文字以上（地区名としては長すぎる＝説明文と判断）
-          const isGuide = n.includes('ガイド') || n.includes('名簿') || n.includes('使い方') || 
-                          n.includes('三重第2区') || n.includes('活動') || n.includes('手順');
-          return n && !isGuide && n.length < 20;
-        })
-        .map(s => `
+      $('area-list').innerHTML = areaSummary.map(s => `
         <div style="background: #0b0b0b; border-radius: 32px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 0 20px rgba(37,99,235,0.06);" 
              class="clickable-card p-8 flex items-center" onclick="openDetail('${s.name}')">
-          <div class="w-3 h-3 rounded-full mr-6 ${s.progress >= 100 ? 'bg-[#22c55e] shadow-[0_0_15px_#22c55e]' : 'bg-[#e11d48] animate-pulse'}"></div>
+          <div class="w-3 h-3 rounded-full mr-6 ${s.progress >= 100 ? 'bg-[#22c55e] shadow-[0_0_15px_#22c55e]' : 'bg-[#e11d48]'}"></div>
           <div class="flex-1">
             <div class="text-lg font-black text-white tracking-tighter">${s.name}</div>
             <div class="text-[9px] font-bold text-gray-500 mt-1 uppercase tracking-widest">${s.progress}% Completed</div>
@@ -347,7 +300,6 @@
       
       if (!userInfo) {
         // Card 1: Registration (Absolute alignment with Splash Model)
-        $('bottom-nav').classList.add('hidden');
         container.innerHTML = `
           <div class="flex flex-col items-center justify-center py-10 px-4">
             <div class="mb-16 text-center">
@@ -375,7 +327,6 @@
         `;
       } else {
         // Card 2: Distributor ID Card (Standardized to Splash Model)
-        $('bottom-nav').classList.remove('hidden');
         container.innerHTML = `
           <div class="py-10 px-4 flex flex-col items-center">
             <div class="mb-16 text-center">
@@ -407,7 +358,6 @@
     function logout() {
       if(confirm('登録を解除してもよろしいですか？')) {
         localStorage.removeItem('user_info');
-        $('bottom-nav').classList.add('hidden');
         renderSettings();
       }
     }
@@ -422,31 +372,15 @@
       $('header-pct').textContent = Math.round(avg) + '%';
     }
 
-
     function saveProfile() {
-      const last = $('user-last').value.trim();
-      const first = $('user-first').value.trim();
-      if (!last || !first) { 
-        showModal("姓名を入力して<br>ください", "名前は必須項目です");
-        return; 
-      }
-      
-      const info = { last, first, registeredAt: new Date().toISOString() };
-      localStorage.setItem('user_info', JSON.stringify(info));
+      const last = $('user-last').value.trim(), first = $('user-first').value.trim();
+      if (!last || !first) { alert('姓名を入力してください'); return; }
+      localStorage.setItem('user_info', JSON.stringify({last, first}));
       loadData();
     }
 
     window.onload = () => {
-      const saved = localStorage.getItem('user_info');
-      // 厳格なチェック: 文字列の "null" や "undefined" も除外
-      if (saved && saved !== "null" && saved !== "undefined") {
-        console.log("Registered user detected. Auto-launching...");
-        $('screen-gateway').classList.add('hidden');
-        loadData();
-      } else {
-        console.log("New user detected. Showing splash gateway.");
-        $('screen-gateway').classList.remove('hidden');
-      }
+      console.log("POSTING MAP PRO initialized.");
     };
   </script>
 </body>
