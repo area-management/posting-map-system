@@ -166,8 +166,8 @@
 
     // プレミアム・モーダル制御
     function showModal(title, msg) {
-      $('modal-title').textContent = title;
-      $('modal-msg').textContent = msg;
+      $('modal-title').innerHTML = title;
+      $('modal-msg').innerHTML = msg;
       const container = $('modal-container');
       const box = $('modal-box');
       container.classList.remove('opacity-0', 'pointer-events-none');
@@ -407,7 +407,7 @@
       const last = $('user-last').value.trim();
       const first = $('user-first').value.trim();
       if (!last || !first) { 
-        showModal("姓名を入力してください", "名前は必須項目です。");
+        showModal("姓名を入力して<br>ください", "名前は必須項目です");
         return; 
       }
       
