@@ -248,7 +248,7 @@
       } catch (err) {
         console.error("Startup Error:", err);
         $('loading').classList.add('hidden');
-        $('screen-gateway').classList.remove('hidden');
+        showModal("通信エラー", "データの取得に失敗しました。電波の良い場所で再度お試しください。");
       }
     }
 
