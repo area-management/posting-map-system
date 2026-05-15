@@ -130,6 +130,19 @@
     </nav>
   </div>
 
+  <div id="modal-container" class="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-8 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-[#1c1c1e] w-full max-w-[320px] rounded-[2.5rem] p-10 border border-white/5 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-box">
+      <div class="flex flex-col items-center text-center">
+        <div class="w-16 h-16 bg-[#2563eb]/10 rounded-full flex items-center justify-center mb-8">
+          <div class="w-8 h-8 rounded-full border-2 border-[#2563eb] flex items-center justify-center text-[#2563eb] font-black text-xl italic">i</div>
+        </div>
+        <h3 id="modal-title" class="text-xl font-black text-white tracking-tighter mb-3">姓名を入力してください</h3>
+        <p id="modal-msg" class="text-xs font-medium text-gray-500 leading-relaxed mb-10 px-4">名前は必須項目です。</p>
+        <button onclick="closeModal()" class="btn-neu w-full bg-[#2563eb] text-white py-5 rounded-[1.4rem] text-sm font-black shadow-lg shadow-blue-900/20">閉じる</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const $ = id => document.getElementById(id);
     let allPoints = [], areaSummary = [], roster = [];
@@ -149,6 +162,23 @@
       document.querySelectorAll('.pressed-primary, .pressed-secondary, .pressed-nav').forEach(el => {
         el.classList.remove('pressed-primary', 'pressed-secondary', 'pressed-nav');
       });
+    }
+
+    // プレミアム・モーダル制御
+    function showModal(title, msg) {
+      $('modal-title').textContent = title;
+      $('modal-msg').textContent = msg;
+      const container = $('modal-container');
+      const box = $('modal-box');
+      container.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => box.classList.remove('scale-95'), 10);
+    }
+
+    function closeModal() {
+      const container = $('modal-container');
+      const box = $('modal-box');
+      box.classList.add('scale-95');
+      container.classList.add('opacity-0', 'pointer-events-none');
     }
     
     // GAS API CONFIG (JSON ONLY)
@@ -372,10 +402,17 @@
       $('header-pct').textContent = Math.round(avg) + '%';
     }
 
+
     function saveProfile() {
-      const last = $('user-last').value.trim(), first = $('user-first').value.trim();
-      if (!last || !first) { alert('姓名を入力してください'); return; }
-      localStorage.setItem('user_info', JSON.stringify({last, first}));
+      const last = $('user-last').value.trim();
+      const first = $('user-first').value.trim();
+      if (!last || !first) { 
+        showModal("姓名を入力してください", "名前は必須項目です。");
+        return; 
+      }
+      
+      const info = { last, first, registeredAt: new Date().toISOString() };
+      localStorage.setItem('user_info', JSON.stringify(info));
       loadData();
     }
 
