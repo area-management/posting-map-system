@@ -141,6 +141,7 @@
         <button onclick="closeModal()" class="btn-neu w-full bg-[#2563eb] text-white py-5 rounded-[1.4rem] text-sm font-black shadow-lg shadow-blue-900/20">閉じる</button>
       </div>
     </div>
+    <p class="mt-20 text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 opacity-40">Operational Environment</p>
   </div>
 
   <script>
@@ -426,7 +427,14 @@
     }
 
     window.onload = () => {
-      console.log("POSTING MAP PRO initialized.");
+      const saved = localStorage.getItem('user_info');
+      if (saved) {
+        // 登録済みならスプラッシュを即座に隠して起動
+        $('screen-gateway').classList.add('hidden');
+        loadData();
+      } else {
+        console.log("POSTING MAP PRO: Initial splash mode.");
+      }
     };
   </script>
 </body>

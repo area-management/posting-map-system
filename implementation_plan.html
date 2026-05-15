@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>次世代ポスティング管理システム SaaS 開発・実装計画書</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --text: #1a1a1a;
+    --bg: #ffffff;
+    --light-bg: #f8faff;
+    --border: #eeeeee;
+  }
+  body {
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+    line-height: 1.8;
+    color: var(--text);
+    max-width: 900px;
+    margin: 60px auto;
+    padding: 0 40px;
+    background-color: var(--bg);
+  }
+  header {
+    text-align: center;
+    border-bottom: 4px solid #000;
+    margin-bottom: 60px;
+    padding-bottom: 30px;
+  }
+  h1 { font-size: 32px; margin-bottom: 10px; font-weight: 900; letter-spacing: -0.02em; }
+  .subtitle { font-size: 18px; color: #666; font-weight: 500; }
+  
+  h2 {
+    font-size: 24px;
+    border-left: 10px solid var(--primary);
+    padding: 12px 20px;
+    margin-top: 50px;
+    margin-bottom: 25px;
+    background: var(--light-bg);
+    border-radius: 0 8px 8px 0;
+  }
+  h3 {
+    font-size: 19px;
+    border-bottom: 2px solid var(--primary);
+    display: inline-block;
+    margin-top: 35px;
+    margin-bottom: 15px;
+    padding-bottom: 4px;
+  }
+  p { margin-bottom: 20px; }
+  ul, ol { margin-bottom: 30px; padding-left: 25px; }
+  li { margin-bottom: 14px; }
+  
+  .tag {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    padding: 3px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    margin-right: 12px;
+    vertical-align: middle;
+  }
+  .highlight {
+    background: #fff9c4;
+    padding: 3px 6px;
+    font-weight: bold;
+    border-radius: 4px;
+  }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 25px;
+    background: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+  }
+  
+  hr { border: 0; border-top: 1px solid var(--border); margin: 60px 0; }
+  footer {
+    margin-top: 120px;
+    text-align: right;
+    font-size: 13px;
+    color: #888;
+    border-top: 1px solid var(--border);
+    padding-top: 30px;
+  }
+  .status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 8px;
+  }
+  .done { background: #dcfce7; color: #166534; }
+  .current { background: #dbeafe; color: #1e40af; }
+  
+  @media print {
+    body { margin: 20px; padding: 0; }
+    h2 { background: #f0f0f0; border-left-color: #000; }
+    .card { box-shadow: none; border-color: #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>次世代ポスティング管理システム SaaS 開発・実装計画書</h1>
+  <div class="subtitle">Next-Gen Posting Management SaaS — Implementation Blueprint (v1.2)</div>
+</header>
+
+<section>
+  <h2>1. エグゼクティブ・サマリー (Executive Summary)</h2>
+  <div class="card">
+    <h3>ビジョン</h3>
+    <p>「単なる報告ツール」から「データ駆動型の物流インフラ」へ。<br>
+    ポスティング業界における「報告の不透明さ」を100%のエビデンス（GPS+写真）で解消し、配布員の導入障壁をLINE連携によってゼロにする、次世代のSaaS型プラットフォームを構築する。</p>
+    
+    <h3>ターゲット・バリュー</h3>
+    <ul>
+      <li><span class="tag">販売価格</span> 50万円〜（パッケージ/SaaS）</li>
+      <li><span class="tag">コア価値</span> 圧倒的な信頼性（エビデンス）と、現場の操作性（プロフェッショナルUI）</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>2. UI/UX デザイン・フィロソフィー (現場至上主義)</h2>
+  <p>本システムは、配布員のモチベーションを高め、クライアントに「プロの仕事」を感じさせる最高級の意匠を採用する。</p>
+  
+  <h3>漆黒UI (#000000) ✕ 実利</h3>
+  <ul>
+    <li><span class="highlight">視認性と省電力:</span> 屋外で動く配布員にとって、直射日光下での高い視認性とバッテリー消費の抑制は死活問題である。本UIは「現場を熟知したシステム」としての強力な説得力を有する。</li>
+    <li><span class="highlight">LINEリッチメニューとの統一:</span> LINE内のボタンデザインも漆黒で統一し、LINEを開いた瞬間からプロ専用ツールが起動する体験を提供する。</li>
+  </ul>
+  <p>※句読点を排除したミニマルなタイポグラフィにより、情報のノイズを最小化する。</p>
+</section>
+
+<section>
+  <h2>3. システム・モジュール構成</h2>
+  <div class="card">
+    <h3>モジュールA：配布員用 LIFFアプリ (Distributor App)</h3>
+    <ul>
+      <li><strong>スマート・オンボーディング:</strong> LINEログインによる導入障壁の極限化。</li>
+      <li><strong>フィールド・オペレーション:</strong> 1タップ報告、GPS + 写真撮影によるリアルタイム・エビデンス。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>モジュールB：管理者用 ダッシュボード (Admin Portal)</h3>
+    <ul>
+      <li><strong>戦略ダッシュボード:</strong> 全地区の進捗を統合したヒートマップ表示。</li>
+      <li><strong>オート・レポート・エンジン:</strong> クライアント提出用の配布報告書をPDFで自動生成。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>4. テクニカル・スタック ＆ 運用信頼性</h2>
+  <h3>開発・保守体制: clasp / Deployment ID</h3>
+  <p>モダンな開発手法である <code>clasp</code> を採用することで、B2Bにおける「サポート体制の強さ」を担保する。</p>
+  <ul>
+    <li><strong>高速アップデート:</strong> 修正や機能追加をコマンド一つで全ユーザーへ即座に反映。</li>
+    <li><strong>マルチテナント対応:</strong> 将来的な複数企業への展開時も、企業ごとのカスタマイズへ迅速に対応可能。</li>
+    <li><strong>Google Sheetsの採用理由:</strong> 高速導入・低コストに加え、非エンジニアの管理者でもデータの直接確認・修正が可能な「現場の透明性」を確保。</li>
+  </ul>
+</section>
+
+<section>
+  <h2>5. 最強のセールスポイント (Sales Strategy)</h2>
+  <p>本システムを導入することは、導入企業のポスティング事業における<span class="highlight">「受注率向上」</span>に直結する。</p>
+  <div class="card" style="border-top: 4px solid #16a34a;">
+    <ul>
+      <li><strong>「不透明さ」の完全解消:</strong> クライアントからの「本当に配ったのか？」という疑念を、リアルタイムのヒートマップと写真エビデンスで封殺。</li>
+      <li><strong>営業の武器:</strong> 「わが社はここまで透明な報告が可能です」と提案できることで、導入企業は競合他社に対して圧倒的な優位性を築き、新規案件の獲得率を向上させる。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>6. セキュリティ方針</h2>
+  <p>認証・通信はGoogleおよびLINEの公式エンタープライズ基盤を利用し、最高水準の安全性と導入速度を両立する。位置情報や写真データは業務報告目的以外には一切利用されない設計を徹底する。</p>
+</section>
+
+<section>
+  <h2>7. SaaS ビジネスモデル (SaaS Model)</h2>
+  <ul>
+    <li><strong>初期導入費用:</strong> システム構築および初期設定コスト。</li>
+    <li><strong>月額基本料:</strong> サーバー維持、継続的なアップデート、保守対応。</li>
+    <li><strong>従量課金オプション:</strong> LINE通知送信数や配布員規模に応じた料金体系。</li>
+  </ul>
+</section>
+
+<section>
+  <h2>8. 開発ロードマップ</h2>
+  <ul>
+    <li><span class="status done">DONE</span> <strong>Phase 1: 基盤構築</strong>（漆黒UI、IDカードモジュール、プレミアム・インタラクション）</li>
+    <li><span class="status current">CURRENT</span> <strong>Phase 2: LINEエコシステム連携</strong>（LIFF / LINEログイン / 招待エンジン）</li>
+    <li><span class="status">NEXT</span> <strong>Phase 3: フィールド・インテリジェンス</strong>（地図連携 / AI最適化エンジン（構想中））</li>
+  </ul>
+</section>
+
+<footer>
+  <p>作成日: 2026年5月15日 (Rev. 1.2)</p>
+  <p>設計者: Antigravity (Advanced Agentic Coding AI)</p>
+</footer>
+
+</body>
+</html>
