@@ -122,7 +122,7 @@
     </main>
 
     <!-- 下ナビ：90pxに調整 -->
-    <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[4000]">
+    <nav id="bottom-nav" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[4000] hidden">
       <div class="bg-white/5 backdrop-blur-3xl rounded-[2.5rem] p-2 border border-white/10 flex justify-around items-center h-[90px] relative shadow-2xl">
         <button onclick="switchPage('areas')" class="nav-btn flex flex-col items-center gap-1 flex-1 transition-all"><div class="text-xl">📍</div><span class="text-[10px] font-black uppercase tracking-widest text-gray-500">地区</span></button>
         <button onclick="switchPage('settings')" class="nav-btn flex flex-col items-center gap-1 flex-1 transition-all"><div class="text-xl">👤</div><span class="text-[10px] font-black uppercase tracking-widest text-gray-500">設定</span></button>
@@ -229,7 +229,13 @@
           updateStats();
           
           const saved = localStorage.getItem('user_info');
-          switchPage(saved ? 'areas' : 'settings');
+          if (saved) {
+            $('bottom-nav').classList.remove('hidden');
+            switchPage('areas');
+          } else {
+            $('bottom-nav').classList.add('hidden');
+            switchPage('settings');
+          }
           
           $('app').classList.remove('hidden');
           setTimeout(() => {
@@ -330,6 +336,7 @@
       
       if (!userInfo) {
         // Card 1: Registration (Absolute alignment with Splash Model)
+        $('bottom-nav').classList.add('hidden');
         container.innerHTML = `
           <div class="flex flex-col items-center justify-center py-10 px-4">
             <div class="mb-16 text-center">
@@ -357,6 +364,7 @@
         `;
       } else {
         // Card 2: Distributor ID Card (Standardized to Splash Model)
+        $('bottom-nav').classList.remove('hidden');
         container.innerHTML = `
           <div class="py-10 px-4 flex flex-col items-center">
             <div class="mb-16 text-center">
@@ -388,6 +396,7 @@
     function logout() {
       if(confirm('登録を解除してもよろしいですか？')) {
         localStorage.removeItem('user_info');
+        $('bottom-nav').classList.add('hidden');
         renderSettings();
       }
     }
