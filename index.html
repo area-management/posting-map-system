@@ -259,10 +259,14 @@
         $('area-list').innerHTML = '<p class="text-center text-gray-500 py-20 font-bold">データがありません。<br>一括作成を実行してください。</p>';
         return;
       }
-      $('area-list').innerHTML = areaSummary.map(s => `
+
+      // 業務に関係ないシート（ガイド、名簿など）を除外してレンダリング
+      $('area-list').innerHTML = areaSummary
+        .filter(s => s.name !== '初めての方「使い方ガイド」' && s.name !== '名簿')
+        .map(s => `
         <div style="background: #0b0b0b; border-radius: 32px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 0 20px rgba(37,99,235,0.06);" 
              class="clickable-card p-8 flex items-center" onclick="openDetail('${s.name}')">
-          <div class="w-3 h-3 rounded-full mr-6 ${s.progress >= 100 ? 'bg-[#22c55e] shadow-[0_0_15px_#22c55e]' : 'bg-[#e11d48]'}"></div>
+          <div class="w-3 h-3 rounded-full mr-6 ${s.progress >= 100 ? 'bg-[#22c55e] shadow-[0_0_15px_#22c55e]' : 'bg-[#e11d48] animate-pulse'}"></div>
           <div class="flex-1">
             <div class="text-lg font-black text-white tracking-tighter">${s.name}</div>
             <div class="text-[9px] font-bold text-gray-500 mt-1 uppercase tracking-widest">${s.progress}% Completed</div>
