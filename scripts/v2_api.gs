@@ -105,19 +105,34 @@ function createJsonResponse(data) {
 
 function getAppData() {
   const ss = getSS();
-  const guideSheet = ss.getSheetByName(CONFIG.SHEET_GUIDE);
-  if (!guideSheet) throw new Error("Guide sheet not found");
-
-  const lastRow = guideSheet.getLastRow();
-  if (lastRow < 2) return { areas: [] };
+  const sheets = ss.getSheets();
   
-  const values = guideSheet.getRange(2, 1, lastRow - 1, 8).getValues();
-  const areas = values
-    .filter(r => r[0] && r[0] !== "")
-    .map(r => ({
-      name: r[0],
-      progress: Math.round(parseFloat(r[6]) * 100) || 0
-    }));
+  // 除外するシート名のリスト
+  const systemSheets = [
+    CONFIG.SHEET_GUIDE, CONFIG.SHEET_ROSTER, CONFIG.SHEET_TEMPLATE, 
+    CONFIG.SHEET_POSTAL, CONFIG.SHEET_DISTRICT, CONFIG.SHEET_MASTER_EXPORT, 
+    CONFIG.SHEET_REPORT, CONFIG.SHEET_MANUAL, CONFIG.SHEET_SYSTEM_CACHE
+  ];
+
+  const areas = [];
+  sheets.forEach(s => {
+    const name = s.getName();
+    // システム用シートでなく、かつ非表示でないシートを「地区」とみなす
+    if (!systemSheets.includes(name) && !s.isSheetHidden()) {
+      const lastRow = s.getLastRow();
+      let progress = 0;
+      if (lastRow > 1) {
+        const doneValues = s.getRange(2, 4, lastRow - 1, 1).getValues().flat();
+        const total = doneValues.length;
+        const completed = doneValues.filter(v => v === true || v === "TRUE").length;
+        progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+      }
+      areas.push({
+        name: name,
+        progress: progress
+      });
+    }
+  });
 
   return {
     success: true,
