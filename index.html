@@ -64,32 +64,32 @@
 <body class="bg-[#000000] text-white font-sans antialiased overflow-hidden select-none transition-colors duration-500">
 
   <!-- 1. GATEWAY / SPLASH -->
-  <div id="screen-gateway" class="fixed inset-0 z-[1000] bg-apple-light dark:bg-apple-dark flex flex-col items-center justify-center p-10 text-center">
+  <div id="screen-gateway" class="fixed inset-0 z-[1000] bg-[#000000] flex flex-col items-center justify-center p-10 text-center">
     <div class="flex flex-col items-center justify-center mb-6 mt-0">
-      <div class="w-44 h-44 bg-apple-light dark:bg-[#1c1c1e] rounded-[3.8rem] shadow-neu-light dark:shadow-neu-dark flex items-center justify-center overflow-hidden mb-6 p-1 relative">
-        <img src="https://area-management.github.io/posting-map-system/assets/icon180-v2.png?v=100" class="w-full h-full object-cover rounded-[3.5rem] z-10">
+      <div class="w-44 h-44 bg-white/5 backdrop-blur-2xl rounded-[3.8rem] border border-white/10 flex items-center justify-center overflow-hidden mb-6 p-1 relative shadow-2xl">
+        <img src="https://area-management.github.io/posting-map-system/assets/icon180-v2.png?v=200" class="w-full h-full object-cover rounded-[3.5rem] z-10">
       </div>
-      <p class="description text-gray-500 dark:text-gray-400 text-sm">
-        <span class="font-black">ホーム画面へ追加してから</span><br>
-        <span class="font-medium">アプリをご利用ください</span>
-      </p>
+      <div class="mb-12 text-center">
+        <h2 style="color: rgba(255,255,255,0.72);" class="text-base font-black leading-tight">ホーム画面へ追加してから</h2>
+        <p style="color: rgba(255,255,255,0.4);" class="text-[11px] font-medium mt-2">アプリをご利用ください</p>
+      </div>
     </div>
     <div class="w-full max-w-sm space-y-4">
-      <div class="bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 shadow-[0_0_20px_rgba(37,99,235,0.08)] border border-white/20">
-        <button onclick="startApp()" class="btn-neu w-full bg-navy dark:bg-blue-600 text-white rounded-2xl py-6 text-lg font-black shadow-xl uppercase tracking-tighter">アプリを起動する</button>
+      <div class="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
+        <button onclick="startApp()" class="btn-neu w-full bg-[#2563eb] text-white rounded-2xl py-6 text-lg font-black shadow-xl uppercase tracking-tighter">アプリを起動する</button>
       </div>
-      <p class="text-[10px] font-black text-gray-400 dark:text-gray-600 uppercase tracking-[0.4em] pt-4">Operational Environment</p>
+      <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] pt-4">Operational Environment</p>
     </div>
   </div>
 
   <!-- 2. LOADING -->
-  <div id="loading" class="fixed inset-0 z-[5000] flex flex-col items-center justify-center bg-apple-light dark:bg-apple-dark transition-opacity duration-700 hidden">
-    <div class="w-12 h-12 border-[3px] border-navy/10 dark:border-white/10 border-t-navy dark:border-t-white rounded-full animate-spin"></div>
-    <p class="mt-6 text-[10px] font-black text-navy/40 dark:text-white/40 uppercase tracking-[0.3em] animate-pulse">Syncing Data...</p>
+  <div id="loading" class="fixed inset-0 z-[5000] flex flex-col items-center justify-center bg-[#000000] transition-opacity duration-700 hidden">
+    <div class="w-12 h-12 border-[3px] border-white/10 border-t-[#2563eb] rounded-full animate-spin"></div>
+    <p class="mt-6 text-[10px] font-black text-white/40 uppercase tracking-[0.3em] animate-pulse">Syncing Data...</p>
   </div>
 
   <!-- 3. MAIN APP -->
-  <div id="app" class="fixed inset-0 z-[2000] flex flex-col bg-apple-light dark:bg-apple-dark opacity-0 transition-opacity duration-1000 hidden">
+  <div id="app" class="fixed inset-0 z-[2000] flex flex-col bg-[#000000] opacity-0 transition-opacity duration-1000 hidden">
     <header class="safe-top px-8 py-8 flex justify-between items-center">
       <h1 class="text-2xl font-black tracking-tighter text-white leading-none">POSTING MAP</h1>
       <div class="bg-white/5 backdrop-blur-xl px-5 py-2 rounded-full flex items-center gap-3 border border-white/10">
