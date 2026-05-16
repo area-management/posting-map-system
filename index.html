@@ -304,6 +304,11 @@
     function switchPage(id) {
       document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
       if (id === 'settings') renderSettings();
+      
+      // 全画面共通：登録済みなら下ナビを表示、未登録なら隠す
+      const nav = $('bottom-nav');
+      if (nav) nav.style.display = localStorage.getItem('user_info') ? '' : 'none';
+
       const target = $(id === 'detail' ? 'page-detail' : (id === 'settings' ? 'page-settings' : 'page-areas'));
       if(target) target.classList.remove('hidden');
       document.querySelectorAll('.nav-btn').forEach((b, i) => { b.style.opacity = (id === 'areas' && i === 0) || (id === 'settings' && i === 1) ? '1' : '0.3'; });
@@ -313,12 +318,6 @@
     function renderSettings() {
       const userInfo = JSON.parse(localStorage.getItem('user_info'));
       const container = $('settings-content');
-      
-      // 未登録時はナビゲーションを隠す
-      const nav = $('bottom-nav');
-      if (nav) {
-        nav.style.display = userInfo ? '' : 'none';
-      }
       
       if (!userInfo) {
         // Card 1: Registration (Absolute alignment with Splash Model)
