@@ -179,3 +179,8 @@ Avoid:
 * excessive icons
 
 Less information = stronger design.
+
+## Cross-Device Layout & Compatibility (Progressive Enhancement)
+* Base Layout: 常に `w-full` や Flexbox、均等な余白 (`px-` 等) を駆使し、どんな画面幅でも絶対にレイアウトが崩れない、または非対称にならない「流動的で強牢な構造」をベースとすること。固定幅(px指定)でレイアウトを制限してはならない。
+* Device Agnosticism: iOS/Android問わず、横スクロールが発生したり、要素が見切れたりすることは絶対に許されない。
+* Progressive Enhancement: iPhoneネイティブの極上ガラスUI（超微弱グロー、`-webkit-backdrop-filter`、0.04のエッジライトなど）を「最高到達点」として実装しつつ、必ず標準CSS（`backdrop-filter` 等）を併記し、他の端末でも高級感が損なわれず安全に表示される汎用コードを書くこと。
