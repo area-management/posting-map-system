@@ -158,18 +158,27 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbyFoJ2Tp7F4MOZ3lNyVDLTl45fVlV-hyAC1uYGL42oXkjBJ3ylST3KUYpaTb0lpK9FmSA/exec";
 
     async function callApi(action, params = {}) {
+      const isPost = (action === 'submitDistribution' || action === 'registerStaff');
       let url = API_URL + "?action=" + action;
-      for (let key in params) {
-        url += "&" + key + "=" + encodeURIComponent(params[key]);
+      
+      let options = {
+        method: isPost ? 'POST' : 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        redirect: 'follow'
+      };
+
+      if (isPost) {
+        options.body = JSON.stringify({ action: action, ...params });
+        options.headers = { 'Content-Type': 'text/plain;charset=utf-8' };
+      } else {
+        for (let key in params) {
+          url += "&" + key + "=" + encodeURIComponent(params[key]);
+        }
       }
       
       try {
-        const response = await fetch(url, {
-          method: 'GET',
-          mode: 'cors',
-          credentials: 'omit',
-          redirect: 'follow'
-        });
+        const response = await fetch(url, options);
         
         if (!response.ok) {
           throw new Error(`HTTP Error: ${response.status}`);
@@ -378,11 +387,26 @@
       $('header-pct').textContent = Math.round(avg) + '%';
     }
 
-    function saveProfile() {
+    async function saveProfile() {
       const last = $('user-last').value.trim(), first = $('user-first').value.trim();
       if (!last || !first) { alert('姓名を入力してください'); return; }
-      localStorage.setItem('user_info', JSON.stringify({last, first}));
-      loadData();
+      
+      $('loading').classList.remove('hidden');
+      $('loading').classList.remove('opacity-0');
+      
+      try {
+        const res = await callApi('registerStaff', { lastName: last, firstName: first });
+        if (res && res.success) {
+          localStorage.setItem('user_info', JSON.stringify({last, first, id: res.id}));
+          loadData();
+        } else {
+          throw new Error('Failed');
+        }
+      } catch (err) {
+        alert('通信エラーが発生しました。');
+        $('loading').classList.add('opacity-0');
+        setTimeout(() => $('loading').classList.add('hidden'), 700);
+      }
     }
 
     window.onload = () => {
