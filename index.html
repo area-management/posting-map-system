@@ -128,9 +128,9 @@
       </section>
     </main>
 
-    <!-- 下ナビ：90pxに調整 -->
-    <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[4000]">
-      <div class="bg-white/5 backdrop-blur-3xl rounded-[2.5rem] p-2 border border-white/10 flex justify-around items-center h-[90px] relative shadow-2xl">
+    <!-- 下ナビ：iOSライクなガラス感に調整 -->
+    <nav id="bottom-nav" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[4000]">
+      <div style="backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.06);" class="bg-white/5 rounded-[2.5rem] p-2 flex justify-around items-center h-[90px] relative shadow-2xl">
         <button onclick="switchPage('areas')" class="nav-btn flex flex-col items-center gap-1 flex-1 transition-all"><div class="text-xl">📍</div><span class="text-[10px] font-black uppercase tracking-widest text-gray-500">地区</span></button>
         <button onclick="switchPage('settings')" class="nav-btn flex flex-col items-center gap-1 flex-1 transition-all"><div class="text-xl">👤</div><span class="text-[10px] font-black uppercase tracking-widest text-gray-500">設定</span></button>
       </div>
@@ -313,6 +313,12 @@
     function renderSettings() {
       const userInfo = JSON.parse(localStorage.getItem('user_info'));
       const container = $('settings-content');
+      
+      // 未登録時はナビゲーションを隠す
+      const nav = $('bottom-nav');
+      if (nav) {
+        nav.style.display = userInfo ? '' : 'none';
+      }
       
       if (!userInfo) {
         // Card 1: Registration (Absolute alignment with Splash Model)
