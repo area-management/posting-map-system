@@ -140,12 +140,13 @@ Avoid breaking existing frontend communication.
 * Wide padding preferred
 
 ## Card Style
-Use this as the default base card style:
+Use this as the "Ultimate Apple Native Glass UI" base for ALL cards and frames:
 ```css
-background: #0b0b0b;
-border-radius: 32px;
-border: 1px solid rgba(255,255,255,0.08);
-box-shadow: 0 0 20px rgba(37,99,235,0.06);
+border-radius: 28px;
+background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008));
+box-shadow: inset 0 0 0 1px rgba(120,140,255,0.08), 0 0 30px rgba(37,99,235,0.05);
+backdrop-filter: blur(20px);
+-webkit-backdrop-filter: blur(20px);
 ```
 
 ## Button Style
