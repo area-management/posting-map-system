@@ -311,6 +311,13 @@
 
       const target = $(id === 'detail' ? 'page-detail' : (id === 'settings' ? 'page-settings' : 'page-areas'));
       if(target) target.classList.remove('hidden');
+      
+      if (id === 'settings') {
+        $('content').classList.remove('pb-64');
+      } else {
+        $('content').classList.add('pb-64');
+      }
+
       document.querySelectorAll('.nav-btn').forEach((b, i) => { b.style.opacity = (id === 'areas' && i === 0) || (id === 'settings' && i === 1) ? '1' : '0.3'; });
       $('content').scrollTo(0,0);
     }
