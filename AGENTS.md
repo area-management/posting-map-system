@@ -115,7 +115,7 @@ Avoid breaking existing frontend communication.
 
 ## Splash Screen Golden Ratio (Mandatory)
 * Vertical Rhythm: Use consistent `mb-6` (24px) or `gap-6` between Icon, Text, and Button.
-* Top-Weighted Balance: Apply `pb-24` (96px) to the parent container to lift content upwards.
+* Browser Safety Balance: Use `h-[100dvh]` and symmetrical padding (`p-6 pb-6`) to center content safely without overlapping Safari/Chrome toolbars. DO NOT force top-weighted padding like `pb-24`.
 * Structural Rule: Avoid nested margins. Maintain a single linear flex container.
 * Footer Style: 2-line uppercase tracking (e.g., OPERATIONAL / ENVIRONMENT).
 * Layout: `flex flex-col items-center justify-center text-center`.
