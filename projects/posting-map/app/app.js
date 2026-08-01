@@ -68,7 +68,7 @@ function removePressed() {
 // GAS API CONFIG (DYNAMICS LOADED WITH FALLBACK)
 const API_URL = (window.PMS_CLIENT_CONFIG && window.PMS_CLIENT_CONFIG.api && window.PMS_CLIENT_CONFIG.api.gasWebAppUrl)
   ? window.PMS_CLIENT_CONFIG.api.gasWebAppUrl
-  : "https://script.google.com/macros/s/AKfycbwgiOFU5iudUS6UscNU-MZhnxZJaqJHywVA9ivA-GE0uLe02fi7mmBU474lWa1TD7-R/exec";
+  : "https://script.google.com/macros/s/AKfycbyjNwgZ_6CCv258lqKMrCXJYi0wDR23ZCyyzOQIV1R_WcCF5TQxYXOzZWWSJd_vMyu_/exec";
 
 async function callApi(action, params = {}) {
   const MAX_RETRIES = 3;

@@ -7,7 +7,7 @@ window.PMS_CLIENT_CONFIG = {
   districtName: "三重県第3区",
   environment: "production",
   api: {
-    gasWebAppUrl: "https://script.google.com/macros/s/AKfycbwIvdhU70u31XsQ-kNh7BebDl_i0jWoqaEZTBoMOqIQsrYxyvrg3eL-BBMd4h2Ugu1C/exec"
+    gasWebAppUrl: "https://script.google.com/macros/s/AKfycbyjNwgZ_6CCv258lqKMrCXJYi0wDR23ZCyyzOQIV1R_WcCF5TQxYXOzZWWSJd_vMyu_/exec"
   },
   line: {
     liffId: "2010374196-bHBYo37e"
